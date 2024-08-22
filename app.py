@@ -1,20 +1,28 @@
 from tkinter import *
 from tkinter.ttk import Progressbar, Button
-import time
+import time, datetime
 
+def initiate():
+    bar["value"] = 0
+    update(start_date, timeframe)
 
-def progress():
-    while bar["value"] < 100:
-        time.sleep(0.01)
-        bar["value"] += 1
-        window.update_idletasks()
+def update(start, interval):
+    if bar["value"] < 100:
+        bar["value"] = ((datetime.datetime.now()-start).total_seconds()/ interval) * 100
+        w.update_idletasks()
+        w.after(10, update, start, interval)
 
-window = Tk()
-window.title("Task Manager")
-window.geometry("500x500")
-window.config(background = "#000000")
+w = Tk()
+w.title("Task Manager")
+w.geometry("500x500")
+w.config(background = "#000000")
 
-label = Label(window, text = "Task Progress:", 
+s1, s2 = "2024-08-22 17:30:00", "2024-08-23 17:30:00"
+start_date = datetime.datetime.strptime(s1, "%Y-%m-%d %H:%M:%S")
+end_date = datetime.datetime.strptime(s2, "%Y-%m-%d %H:%M:%S")
+timeframe = (end_date-start_date).total_seconds()
+
+label = Label(w, text = "Task Progress:", 
               font=("Arial", 20, "bold"), 
               fg = "#5c9bb7", 
               bg = "#000000")
@@ -22,12 +30,10 @@ label = Label(window, text = "Task Progress:",
 label.place(x=150,y=50)
 
 
-bar = Progressbar(window, orient=HORIZONTAL, length = 300)
+bar = Progressbar(w, orient=HORIZONTAL, length = 300)
 bar.place(x=100,y=100)
 
-button = Button(window, text = "Initiate", command = progress)
+button = Button(w, text = "Initiate", command = lambda: initiate())
 button.place(x=200, y=200)
 
-window.mainloop()
-
-
+w.mainloop()
