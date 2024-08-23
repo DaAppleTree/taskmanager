@@ -11,10 +11,14 @@ class HomeworkManagerApp:
         self.root.config(background = "#000000")
 
         self.MARGIN = 100
+        self.GREEN = "#008000"
+        self.RED = "#ff0000"
+        self.WHITE = "#ffffff"
+        self.BLACK = "#000000"
 
         self.assignments = [["2024-08-22 19:00:00", "2024-08-24 22:30:00"], ["2024-08-20 19:00:00", "2024-08-24 23:30:00"], ["2024-01-01 00:00:00", "2025-01-01 00:00:00"]]
-        self.tasks = [[3,5],[5,6],[2,7]]
-        self.timebars, self.taskbars, self.percents, self.times, self.completion = [], [], [], [], [] 
+        self.tasks = [Task(["code", "complete"]), Task(["cry", "cry", "happy"]), Task(["no", "yes", "no", "yes"])]
+        self.timebars, self.taskbars, self.percents, self.times, self.completion, self.currents, self.buttons = [], [], [], [], [], [], []
         
         self.setup()
     
@@ -23,15 +27,14 @@ class HomeworkManagerApp:
         label.place(x=150,y=50)
 
         for i in range(len(self.assignments)):
-            green = "#008000"
-            red = "#ff0000"
 
-            s1 = ttk.Style()
-            s1.theme_use("clam")
-            s1.configure("green.Horizontal.TProgressbar", foreground = green, background = green)
-            s2 = ttk.Style()
-            s2.theme_use("clam")
-            s2.configure("red.Horizontal.TProgressbar", foreground = red, background = red)
+            green_style = ttk.Style()
+            green_style.theme_use("clam")
+            green_style.configure("green.Horizontal.TProgressbar", foreground = self.GREEN, background = self.GREEN)
+
+            red_style = ttk.Style()
+            red_style.theme_use("clam")
+            red_style.configure("red.Horizontal.TProgressbar", foreground = self.RED, background = self.RED)
 
             timebar = Progressbar(self.root, orient = HORIZONTAL, length = 300, style = "red.Horizontal.TProgressbar")
             timebar.place(x = 100, y = self.MARGIN * i + 100)
@@ -39,39 +42,48 @@ class HomeworkManagerApp:
             taskbar = Progressbar(self.root, orient = HORIZONTAL, length = 300, style = "green.Horizontal.TProgressbar")
             taskbar.place(x = 100, y = self.MARGIN  * i + 125)
 
-            percent = Label(self.root, text = "0%", font=("Arial", 10), fg = red, bg = "#000000")
+            percent = Label(self.root, text = "0%", font=("Arial", 10), fg = self.RED, bg = self.BLACK)
             percent.place(x = 50, y = self.MARGIN * i + 100)
 
-            time = Label(self.root, font = ("Arial", 10), fg = "#ffffff", bg = "#000000")
+            time = Label(self.root, font = ("Arial", 10), fg = self.WHITE, bg = self.BLACK)
             time.place(x = 200, y = self.MARGIN  * i + 150)
 
-            completed = Label(self.root, font = ("Arial", 10), fg = green, bg = "#000000")
+            completed = Label(self.root, font = ("Arial", 10), fg = self.GREEN, bg = self.BLACK)
             completed.place(x = 50, y = self.MARGIN * i + 125)
+
+            current = Label(self.root, font = ("Ink", 10, "bold"), fg = self.WHITE, bg = self.BLACK)
+            current.place(x = 400, y = self.MARGIN * i + 100)
+
+            button = Button(self.root, font = ("Arial", 10, "bold"), text = "complete")
+            button.place(x = 200, y = self.MARGIN * i + 170)
 
             self.timebars.append(timebar)
             self.taskbars.append(taskbar)
             self.percents.append(percent)
             self.times.append(time)
             self.completion.append(completed)
+            self.currents.append(current)
+            self.buttons.append(button)
 
         for i in range(len(self.assignments)):
+            self.update(i)
+
+    def update(self, i):
+        if self.timebars[i]["value"] < 100:
             start = datetime.datetime.strptime(self.assignments[i][0], "%Y-%m-%d %H:%M:%S")
             end = datetime.datetime.strptime(self.assignments[i][1], "%Y-%m-%d %H:%M:%S")
-            self.update(self.timebars[i], self.taskbars[i], self.percents[i], self.times[i], self.completion[i], start, end, self.tasks[i])
-
-    def update(self, timebar, taskbar, percent, time, completion, start, end, tasks):
-        if timebar["value"] < 100:
-
             passed = int((datetime.datetime.now()-start).total_seconds())
-            timebar["value"] = passed / (end-start).total_seconds() * 100
-            taskbar["value"] = (tasks[0] / tasks[1]) * 100
+            self.timebars[i]["value"] = passed / (end-start).total_seconds() * 100
+            self.taskbars[i]["value"] = ((self.tasks[i].current) / len(self.tasks[i].tasks)) * 100
+            self.tasks[i].show(self.currents[i])
             
-            percent.config(text = f"{int(passed / (end-start).total_seconds() * 100)}%")
-            time.config(text = self.seconds_to_string((end-start).total_seconds()-passed) + " left")
-            completion.config(text = f"{int((tasks[0]/tasks[1])*100)}%")
+            self.percents[i].config(text = f"{int(passed / (end-start).total_seconds() * 100)}%")
+            self.times[i].config(text = self.seconds_to_string((end-start).total_seconds()-passed) + " left")
+            self.completion[i].config(text = f"{int(((self.tasks[i].current) / len(self.tasks[i].tasks)) * 100)}%")
+            self.buttons[i].config(command = lambda: self.tasks[i].complete())
 
             self.root.update_idletasks()
-            self.root.after(10, self.update, timebar, taskbar, percent, time, completion, start, end, tasks)
+            self.root.after(10, self.update, i)
 
     def seconds_to_string(self, seconds):
         days = int(seconds//(60*60*24))
@@ -87,6 +99,22 @@ class HomeworkManagerApp:
         seconds = str(seconds) if abs(seconds) >= 10 else "0" + str(seconds)
 
         return f"{days}:{hours}:{minutes}:{seconds}"
+
+class Task:
+    def __init__(self, tasks):
+        self.tasks = tasks
+        self.current = 0
+    
+    def complete(self):
+        if self.current < len(self.tasks):
+            self.current += 1
+    
+    def show(self, label):
+        if self.current < len(self.tasks):
+            label.config(text = f"Next Objective:\n{self.current+1}. {self.tasks[self.current]}")
+        else:
+            label.config(text = "Complete!")
+
 
 root = Tk()
 app = HomeworkManagerApp(root)
