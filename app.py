@@ -1,72 +1,70 @@
 from tkinter import *
-from tkinter.ttk import Progressbar, Button
+from tkinter.ttk import Progressbar
 import datetime
 
-def initiate():
-    for i in range(len(bars)):
-        bars[i]["value"] = 0
-        update(bars[i], labels[i], times_left[i], start_date, timeframe)
+class HomeworkManagerApp: 
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Homework Manager")
+        self.root.geometry("500x500")
+        self.root.config(background = "#000000")
 
-def update(bar, label, timeleft, start, interval):
-    if bar["value"] < 100:
+        self.tasks = [["2024-08-22 19:00:00", "2024-08-24 22:30:00"], ["2024-08-20 19:00:00", "2024-08-24 23:30:00"]]
+        self.bars, self.percents, self.times = [], [], [] 
+        
+        self.setup()
+    
+    def setup(self):
+        label = Label(self.root, text = "Task Progress:", font=("Arial", 20, "bold"), fg = "#5c9bb7", bg = "#000000")
+        label.place(x=150,y=50)
 
-        passed = int((datetime.datetime.now()-start).total_seconds())
-        bar["value"] = passed / interval * 100
-        label.config(text = f"{int(passed / interval * 100)}%")
+        for i in range(len(self.tasks)):
+            bar = Progressbar(self.root, orient = HORIZONTAL, length = 300)
+            bar.place(x = 100, y = 50 * i + 100)
 
-        timeleft.config(text = seconds_to_string(interval-passed))
-        w.update_idletasks()
-        w.after(10, update, bar, label, timeleft, start, interval)
+            percent = Label(self.root, text = "0%", font=("Arial", 10, "italic"), fg = "#5c9bb7", bg = "#000000")
+            percent.place(x=150, y = 50 * i + 125)
 
-def seconds_to_string(seconds):
-    days = int(seconds//(60*60*24))
-    daysstr = str(days) if days >= 10 else "0" + str(days)
+            time = Label(self.root, font = ("Arial", 10, "bold"), fg = "#5c9bb7", bg = "#000000")
+            time.place(x = 300, y = 50 * i + 125)
 
-    hours = int(seconds % (60*60*24) //(60*60))
-    hoursstr = str(hours) if hours >= 10 else "0" + str(hours)
+            self.bars.append(bar)
+            self.percents.append(percent)
+            self.times.append(time)
 
-    minutes = int(seconds % (60*60) // 60)
-    minutesstr = str(minutes) if minutes >= 10 else "0" + str(minutes)
+        for i in range(len(self.tasks)):
+            self.bars[i]["value"] = 0
+            start = datetime.datetime.strptime(self.tasks[i][0], "%Y-%m-%d %H:%M:%S")
+            end = datetime.datetime.strptime(self.tasks[i][1], "%Y-%m-%d %H:%M:%S")
+            self.update(self.bars[i], self.percents[i], self.times[i], start, end)
 
-    seconds = int(seconds % 60)
-    secondsstr = str(seconds) if seconds >= 10 else "0" + str(seconds)
+    def update(self, bar, percent, time, start, end):
+        if bar["value"] < 100:
 
-    return f"{daysstr}:{hoursstr}:{minutesstr}:{secondsstr}"
+            passed = int((datetime.datetime.now()-start).total_seconds())
+            bar["value"] = passed / (end-start).total_seconds() * 100
+            
+            percent.config(text = f"{int(passed / (end-start).total_seconds() * 100)}%")
+            time.config(text = self.seconds_to_string((end-start).total_seconds()-passed))
 
-w = Tk()
-w.title("Task Manager")
-w.geometry("500x500")
-w.config(background = "#000000")
+            self.root.update_idletasks()
+            self.root.after(10, self.update, bar, percent, time, start, end)
 
-s1, s2 = "2024-08-22 19:00:00", "2024-08-24 22:30:00"
-start_date = datetime.datetime.strptime(s1, "%Y-%m-%d %H:%M:%S")
-end_date = datetime.datetime.strptime(s2, "%Y-%m-%d %H:%M:%S")
-timeframe = (end_date-start_date).total_seconds()
+    def seconds_to_string(self, seconds):
+        days = int(seconds//(60*60*24))
+        days = str(days) if abs(days) >= 10 else "0" + str(days)
 
-label = Label(w, text = "Task Progress:", 
-              font=("Arial", 20, "bold"), 
-              fg = "#5c9bb7", 
-              bg = "#000000")
+        hours = int(seconds % (60*60*24) //(60*60))
+        hours = str(hours) if abs(hours) >= 10 else "0" + str(hours)
 
-label.place(x=150,y=50)
+        minutes = int(seconds % (60*60) // 60)
+        minutes = str(minutes) if abs(minutes) >= 10 else "0" + str(minutes)
 
-tasks = 2
-bars, labels, times_left = [], [], []
-for i in range(tasks):
-    bar = Progressbar(w, orient = HORIZONTAL, length = 300)
-    bar.place(x = 100, y = 50 * i + 100)
+        seconds = int(seconds % 60)
+        seconds = str(seconds) if abs(seconds) >= 10 else "0" + str(seconds)
 
-    label = Label(w, text = "0%", font=("Arial", 10, "italic"), fg = "#5c9bb7", bg = "#000000")
-    label.place(x=150, y = 50 * i + 125)
+        return f"{days}:{hours}:{minutes}:{seconds}"
 
-    time_left = Label(w, font = ("Arial", 10, "bold"), fg = "#5c9bb7", bg = "#000000")
-    time_left.place(x = 300, y = 50 * i + 125)
-
-    bars.append(bar)
-    labels.append(label)
-    times_left.append(time_left)
-
-button = Button(w, text = "Initiate", command = lambda: initiate())
-button.place(x=200, y=200)
-
-w.mainloop()
+root = Tk()
+app = HomeworkManagerApp(root)
+root.mainloop()
