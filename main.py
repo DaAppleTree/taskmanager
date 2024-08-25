@@ -14,8 +14,9 @@ class HomeworkManager:
     def __init__(self, root):
         self.root = root
         self.root.title("Homework Manager")
-        self.root.geometry("500x500")
+        self.root.geometry("800x500")
         self.root.config(background = "#000000")
+        self.root.resizable(False, False)
 
         self.assignments = [["2024-08-22 19:00:00", "2024-08-24 22:30:00"], ["2024-08-20 19:00:00", "2024-08-24 23:30:00"], ["2024-01-01 00:00:00", "2025-01-01 00:00:00"]]
         self.tasks = [Task(root, 0, ["code", "complete"]), Task(root, 1, ["cry", "cry", "happy"]), Task(root, 2, ["no", "yes", "no", "yes"])]
@@ -104,16 +105,20 @@ class Task:
         self.current = 0
         self.hovered = False
 
-        self.completed = Label(root, font = ("Ink Free", 10, "bold"), fg = HomeworkManager.GREEN, bg = HomeworkManager.BLACK)
-        self.inprogress = Label(root, font = ("Ink Free", 10, "bold"), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
-        self.incompleted = Label(root, font = ("Ink Free", 10, "bold"), fg = HomeworkManager.RED, bg = HomeworkManager.BLACK)
-        
-        self.completed.place(x = 400, y = HomeworkManager.MARGIN * i + 50)
-        self.inprogress.place(x = 400, y = HomeworkManager.MARGIN * i + 100)
-        self.incompleted.place(x = 400, y = HomeworkManager.MARGIN * i + 150)
+        self.tasklist = Frame(root, bg = HomeworkManager.BLACK, width = 150, height = 100)
+        self.tasklist.place(x = 400, y = HomeworkManager.MARGIN * i + 100)
+        self.tasklist.pack_propagate(False)
 
-        self.inprogress.bind("<Enter>", lambda event: self.ismouse(event, True))
-        self.inprogress.bind("<Leave>", lambda event: self.ismouse(event, False))
+        self.completed = Label(self.tasklist, font = ("Ink Free", 10, "bold"), fg = HomeworkManager.GREEN, bg = HomeworkManager.BLACK)
+        self.inprogress = Label(self.tasklist, font = ("Ink Free", 10, "bold"), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+        self.incompleted = Label(self.tasklist, font = ("Ink Free", 10, "bold"), fg = HomeworkManager.RED, bg = HomeworkManager.BLACK)
+        
+        self.completed.pack(side = TOP)
+        self.inprogress.pack(side = TOP)
+        self.incompleted.pack(side = TOP)
+
+        self.tasklist.bind("<Enter>", lambda event: self.ismouse(event, True))
+        self.tasklist.bind("<Leave>", lambda event: self.ismouse(event, False))
     
     def complete(self):
         if self.current < len(self.tasks):
@@ -128,19 +133,21 @@ class Task:
             else:
                 self.inprogress.config(text = "Complete!")
         else:
-            incomplete_tasklist = ""
-            inprogress_tasklist = ""
-            complete_tasklist = ""
+            incomplete_tasklist = str()
+            inprogress_tasklist = str()
+            complete_tasklist = str()
             for i in range(len(self.tasks)):
                 if self.current < i:
-                    incomplete_tasklist += f"{i+1}. {self.tasks[i]}\n"
+                    incomplete_tasklist += f"{i+1}. {self.tasks[i]}"
+                    if self.current - 1 != i:
+                        incomplete_tasklist += "\n"
                 elif self.current > i:
                     complete_tasklist += f"{i+1}. {self.tasks[i]}\n"
                 else:
-                    inprogress_tasklist += f"{i+1}. {self.tasks[i]}\n"
-            self.completed.config(text = complete_tasklist)
-            self.incompleted.config(text = incomplete_tasklist)
-            self.inprogress.config(text = inprogress_tasklist)
+                    inprogress_tasklist += f"{i+1}. {self.tasks[i]}"
+            self.completed.config(text = complete_tasklist.strip())
+            self.incompleted.config(text = incomplete_tasklist.strip())
+            self.inprogress.config(text = inprogress_tasklist.strip())
     
     def ismouse(self, event, state):
         self.hovered = state
