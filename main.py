@@ -30,8 +30,8 @@ class HomeworkManager:
         self.setup()
     
     def setup(self):
-        label = Label(self.root, text = "Task Progress:", font=("Arial", 20, "bold"), fg = "#5c9bb7", bg = "#000000")
-        label.place(x=150,y=50)
+        label = Label(self.scroller.frame, text = "Task Progress:", font=("Arial", 20, "bold"), fg = "#5c9bb7", bg = "#000000")
+        label.pack()
 
         green_style = ttk.Style()
         green_style.theme_use("clam")
@@ -42,22 +42,30 @@ class HomeworkManager:
         red_style.configure("red.Horizontal.TProgressbar", foreground = self.RED, background = self.RED)
 
         for i in range(len(self.assignments)):
-            info = Frame(self.scroller.frame)
-            info.pack()
+            unit = Frame(self.scroller.frame, bg = HomeworkManager.BLACK)
+            unit.pack()
 
-            time = Frame(info)
-            percent = Label(time, font=("Arial", 10), fg = self.RED, bg = self.BLACK)
+            info = Frame(unit, bg = HomeworkManager.BLACK)
+            info.pack(side = LEFT)
+
+            time_info = Frame(info, bg = HomeworkManager.BLACK, width = 400, height = 50)
+
+            percent = Label(time_info, font=("Arial", 10), fg = self.RED, bg = self.BLACK, width = 10, padx = 10)
             percent.pack(side = LEFT)
-            timebar = Progressbar(time, orient = HORIZONTAL, length = 300, style = "red.Horizontal.TProgressbar")
+            timebar = Progressbar(time_info, orient = HORIZONTAL, length = 300, style = "red.Horizontal.TProgressbar")
             timebar.pack(side = LEFT)
-            time.pack(side = TOP)
 
-            work = Frame(info)
-            completion = Label(work, font = ("Arial", 10), fg = self.GREEN, bg = self.BLACK)
+            time_info.pack_propagate(False)
+            time_info.pack(side = TOP)
+
+            progress_info = Frame(info, bg = HomeworkManager.BLACK, width = 400, height = 50)
+            
+            completion = Label(progress_info, font = ("Arial", 10), fg = self.GREEN, bg = self.BLACK, width = 10, padx = 10)
             completion.pack(side = LEFT)
-            taskbar = Progressbar(work, orient = HORIZONTAL, length = 300, style = "green.Horizontal.TProgressbar")
+            taskbar = Progressbar(progress_info, orient = HORIZONTAL, length = 300, style = "green.Horizontal.TProgressbar")
             taskbar.pack(side = LEFT)
-            work.pack(side = TOP)
+            progress_info.pack_propagate(False)
+            progress_info.pack(side = TOP)
 
             time = Label(info, font = ("Arial", 10), fg = self.WHITE, bg = self.BLACK)
             time.pack(side = TOP)
@@ -65,7 +73,7 @@ class HomeworkManager:
             button = Button(info, font = ("Arial", 10, "bold"), text = "complete")
             button.pack(side = TOP)
 
-            # self.tasks[i].tasklist.
+            self.tasks[i].place(unit)
 
             self.timebars.append(timebar)
             self.taskbars.append(taskbar)
@@ -117,8 +125,8 @@ class Task:
         self.current = 0
         self.hovered = False
 
-        self.tasklist = Frame(root, bg = HomeworkManager.BLACK, width = 150, height = 100)
-        self.tasklist.place(x = 400, y = HomeworkManager.MARGIN * i + 100)
+    def place(self, frame):
+        self.tasklist = Frame(frame, bg = HomeworkManager.BLACK, width = 150, height = 100)
         self.tasklist.pack_propagate(False)
 
         self.completed = Label(self.tasklist, font = ("Ink Free", 10, "bold"), fg = HomeworkManager.GREEN, bg = HomeworkManager.BLACK)
@@ -131,6 +139,8 @@ class Task:
 
         self.tasklist.bind("<Enter>", lambda event: self.is_on_mouse(event, True))
         self.tasklist.bind("<Leave>", lambda event: self.is_on_mouse(event, False))
+
+        self.tasklist.pack(side = RIGHT)
     
     def complete(self):
         if self.current < len(self.tasks):
@@ -175,7 +185,7 @@ class Scroller:
         self.canvas.configure(yscrollcommand = self.scrollbar.set)
         self.canvas.bind("<Configure>", lambda event: self.canvas.configure(scrollregion = self.canvas.bbox("all")))
 
-        self.frame = Frame(self.canvas, bg = HomeworkManager.WHITE, padx = 10, pady = 10)
+        self.frame = Frame(self.canvas, bg = HomeworkManager.BLACK, padx = 10, pady = 10)
         self.canvas.create_window((0,0), window = self.frame, anchor = NW)
         self.frame.bind_all("<MouseWheel>", self.is_on_mouse)
     
