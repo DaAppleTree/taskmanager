@@ -23,15 +23,15 @@ class HomeworkManager:
 
         self.scroller = Scroller(self.mainframe)
 
-        self.assignments = [["2024-08-22 19:00:00", "2024-08-26 22:30:00"], ["2024-08-20 19:00:00", "2024-08-26 23:30:00"], ["2024-01-01 00:00:00", "2025-01-01 00:00:00"], ["2024-08-20 19:00:00", "2024-08-26 23:30:00"], ["2024-08-20 19:00:00", "2024-08-26 23:30:00"], ["2024-08-20 19:00:00", "2024-08-26 23:30:00"]]
+        self.assignments = [["2023-08-22 19:00:00", "2024-08-26 22:30:00"], ["2024-08-24 19:00:00", "2024-08-26 23:30:00"], ["2024-01-01 00:00:00", "2025-01-01 00:00:00"], ["2024-08-20 19:00:00", "2024-08-26 23:30:00"], ["2024-08-20 19:00:00", "2024-08-26 23:30:00"], ["2024-08-20 19:00:00", "2024-08-26 23:30:00"]]
         self.tasks = [Task(self.mainframe, 0, ["code", "complete"]), Task(self.mainframe, 1, ["cry", "cry", "happy"]), Task(self.mainframe, 2, ["no", "yes", "no", "yes"]), Task(self.mainframe, 3, ["hi"]), Task(self.mainframe, 4, ["HELLO, BYE"]), Task(self.mainframe, 5, ["hello", "goodbye", "later"])]
-        self.timebars, self.taskbars, self.percents, self.times, self.completions, self.buttons = [], [], [], [], [], []
+        self.time_bars, self.task_bars, self.time_percents, self.task_percents, self.time_lefts, self.buttons = [], [], [], [], [], []
         
         self.setup()
     
     def setup(self):
         label = Label(self.scroller.frame, text = "Task Progress:", font=("Arial", 20, "bold"), fg = "#5c9bb7", bg = "#000000")
-        label.pack()
+        label.pack(side = TOP)
 
         green_style = ttk.Style()
         green_style.theme_use("clam")
@@ -42,66 +42,68 @@ class HomeworkManager:
         red_style.configure("red.Horizontal.TProgressbar", foreground = self.RED, background = self.RED)
 
         for i in range(len(self.assignments)):
-            unit = Frame(self.scroller.frame, bg = HomeworkManager.BLACK)
-            unit.pack()
+            unit = Frame(self.scroller.frame, bg = HomeworkManager.BLACK, bd = 5, relief = SUNKEN)
+            unit.pack(side = TOP)
 
             info = Frame(unit, bg = HomeworkManager.BLACK)
             info.pack(side = LEFT)
 
-            time_info = Frame(info, bg = HomeworkManager.BLACK, width = 400, height = 50)
-
-            percent = Label(time_info, font=("Arial", 10), fg = self.RED, bg = self.BLACK, width = 10, padx = 10)
-            percent.pack(side = LEFT)
-            timebar = Progressbar(time_info, orient = HORIZONTAL, length = 300, style = "red.Horizontal.TProgressbar")
-            timebar.pack(side = LEFT)
-
+            time_info = Frame(info, bg = HomeworkManager.BLACK, width = 400, height = 40)
             time_info.pack_propagate(False)
             time_info.pack(side = TOP)
 
-            progress_info = Frame(info, bg = HomeworkManager.BLACK, width = 400, height = 50)
-            
-            completion = Label(progress_info, font = ("Arial", 10), fg = self.GREEN, bg = self.BLACK, width = 10, padx = 10)
-            completion.pack(side = LEFT)
-            taskbar = Progressbar(progress_info, orient = HORIZONTAL, length = 300, style = "green.Horizontal.TProgressbar")
-            taskbar.pack(side = LEFT)
-            progress_info.pack_propagate(False)
-            progress_info.pack(side = TOP)
+            time_percent = Label(time_info, font=("Arial", 10), fg = self.RED, bg = self.BLACK, width = 5, padx = 5, pady = 0)
+            time_percent.pack(side = LEFT)
+            time_bar = Progressbar(time_info, orient = HORIZONTAL, length = 300, style = "red.Horizontal.TProgressbar")
+            time_bar.pack(side = LEFT)
 
-            time = Label(info, font = ("Arial", 10), fg = self.WHITE, bg = self.BLACK)
-            time.pack(side = TOP)
+            task_info = Frame(info, bg = HomeworkManager.BLACK, width = 400, height = 40)
+            task_info.pack_propagate(False)
+            task_info.pack(side = TOP)
+            
+            task_percent = Label(task_info, font = ("Arial", 10), fg = self.GREEN, bg = self.BLACK, width = 5, padx = 5, pady = 0)
+            task_percent.pack(side = LEFT)
+            task_bar = Progressbar(task_info, orient = HORIZONTAL, length = 300, style = "green.Horizontal.TProgressbar")
+            task_bar.pack(side = LEFT)
+
+            time_left = Label(info, font = ("Arial", 10), fg = self.WHITE, bg = self.BLACK)
+            time_left.pack(side = TOP, pady = 10)
 
             button = Button(info, font = ("Arial", 10, "bold"), text = "complete")
-            button.pack(side = TOP)
+            button.pack(side = TOP, pady = 10)
 
             self.tasks[i].place(unit)
 
-            self.timebars.append(timebar)
-            self.taskbars.append(taskbar)
-            self.percents.append(percent)
-            self.times.append(time)
-            self.completions.append(completion)
+            self.time_bars.append(time_bar)
+            self.task_bars.append(task_bar)
+            self.time_percents.append(time_percent)
+            self.task_percents.append(task_percent)
+            self.time_lefts.append(time_left)
             self.buttons.append(button)
 
         for i in range(len(self.assignments)):
             self.update(i)
 
     def update(self, i):
-        if self.timebars[i]["value"] < 100:
+        if self.time_bars[i]["value"] < 100 and self.task_bars[i]:
             start = datetime.datetime.strptime(self.assignments[i][0], "%Y-%m-%d %H:%M:%S")
             end = datetime.datetime.strptime(self.assignments[i][1], "%Y-%m-%d %H:%M:%S")
             passed = int((datetime.datetime.now()-start).total_seconds())
-            self.timebars[i]["value"] = passed / (end-start).total_seconds() * 100
-            self.taskbars[i]["value"] = ((self.tasks[i].current) / len(self.tasks[i].tasks)) * 100
+            self.time_bars[i]["value"] = passed / (end-start).total_seconds() * 100
+            self.task_bars[i]["value"] = ((self.tasks[i].current) / len(self.tasks[i].tasks)) * 100
             
-            self.percents[i].config(text = f"{int(passed / (end-start).total_seconds() * 100)}%")
-            self.times[i].config(text = self.seconds_to_string((end-start).total_seconds()-passed) + " left")
-            self.completions[i].config(text = f"{int(((self.tasks[i].current) / len(self.tasks[i].tasks)) * 100)}%")
+            self.time_percents[i].config(text = f"{int(passed / (end-start).total_seconds() * 100)}%")
+            self.task_percents[i].config(text = f"{int(((self.tasks[i].current) / len(self.tasks[i].tasks)) * 100)}%")
+
+            self.time_lefts[i].config(fg = f"#ff{hex(int(255 - (passed / (end - start).total_seconds())*100))[2:]}{hex(int(255 - (passed / (end - start).total_seconds())*100))[2:]}")
+            
+            self.time_lefts[i].config(text = self.seconds_to_string((end-start).total_seconds()-passed) + " left")
             self.buttons[i].config(command = lambda: self.tasks[i].complete())
 
             self.tasks[i].show()
 
             self.root.update_idletasks()
-            self.root.after(10, self.update, i)
+            self.root.after(100, self.update, i)
 
     def seconds_to_string(self, seconds):
         days = int(seconds//(60*60*24))
