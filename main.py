@@ -42,23 +42,30 @@ class HomeworkManager:
         red_style.configure("red.Horizontal.TProgressbar", foreground = self.RED, background = self.RED)
 
         for i in range(len(self.assignments)):
-            timebar = Progressbar(self.mainframe, orient = HORIZONTAL, length = 300, style = "red.Horizontal.TProgressbar")
-            timebar.place(x = 100, y = self.MARGIN * i + 100)
+            info = Frame(self.scroller.frame)
+            info.pack()
 
-            taskbar = Progressbar(self.mainframe, orient = HORIZONTAL, length = 300, style = "green.Horizontal.TProgressbar")
-            taskbar.place(x = 100, y = self.MARGIN  * i + 125)
+            time = Frame(info)
+            percent = Label(time, font=("Arial", 10), fg = self.RED, bg = self.BLACK)
+            percent.pack(side = LEFT)
+            timebar = Progressbar(time, orient = HORIZONTAL, length = 300, style = "red.Horizontal.TProgressbar")
+            timebar.pack(side = LEFT)
+            time.pack(side = TOP)
 
-            percent = Label(self.mainframe, font=("Arial", 10), fg = self.RED, bg = self.BLACK)
-            percent.place(x = 50, y = self.MARGIN * i + 100)
+            work = Frame(info)
+            completion = Label(work, font = ("Arial", 10), fg = self.GREEN, bg = self.BLACK)
+            completion.pack(side = LEFT)
+            taskbar = Progressbar(work, orient = HORIZONTAL, length = 300, style = "green.Horizontal.TProgressbar")
+            taskbar.pack(side = LEFT)
+            work.pack(side = TOP)
 
-            time = Label(self.mainframe, font = ("Arial", 10), fg = self.WHITE, bg = self.BLACK)
-            time.place(x = 200, y = self.MARGIN  * i + 150)
+            time = Label(info, font = ("Arial", 10), fg = self.WHITE, bg = self.BLACK)
+            time.pack(side = TOP)
 
-            completion = Label(self.mainframe, font = ("Arial", 10), fg = self.GREEN, bg = self.BLACK)
-            completion.place(x = 50, y = self.MARGIN * i + 125)
+            button = Button(info, font = ("Arial", 10, "bold"), text = "complete")
+            button.pack(side = TOP)
 
-            button = Button(self.mainframe, font = ("Arial", 10, "bold"), text = "complete")
-            button.place(x = 200, y = self.MARGIN * i + 170)
+            # self.tasks[i].tasklist.
 
             self.timebars.append(timebar)
             self.taskbars.append(taskbar)
