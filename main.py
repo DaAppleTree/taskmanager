@@ -18,8 +18,13 @@ class HomeworkManager:
         self.root.config(background = "#000000")
         self.root.resizable(False, False)
 
-        self.assignments = [["2024-08-22 19:00:00", "2024-08-24 22:30:00"], ["2024-08-20 19:00:00", "2024-08-24 23:30:00"], ["2024-01-01 00:00:00", "2025-01-01 00:00:00"]]
-        self.tasks = [Task(root, 0, ["code", "complete"]), Task(root, 1, ["cry", "cry", "happy"]), Task(root, 2, ["no", "yes", "no", "yes"])]
+        self.mainframe = Frame(self.root)
+        self.mainframe.pack(fill = BOTH, expand = 1)
+
+        self.scroller = Scroller(self.mainframe)
+
+        self.assignments = [["2024-08-22 19:00:00", "2024-08-26 22:30:00"], ["2024-08-20 19:00:00", "2024-08-26 23:30:00"], ["2024-01-01 00:00:00", "2025-01-01 00:00:00"], ["2024-08-20 19:00:00", "2024-08-26 23:30:00"], ["2024-08-20 19:00:00", "2024-08-26 23:30:00"], ["2024-08-20 19:00:00", "2024-08-26 23:30:00"]]
+        self.tasks = [Task(self.mainframe, 0, ["code", "complete"]), Task(self.mainframe, 1, ["cry", "cry", "happy"]), Task(self.mainframe, 2, ["no", "yes", "no", "yes"]), Task(self.mainframe, 3, ["hi"]), Task(self.mainframe, 4, ["HELLO, BYE"]), Task(self.mainframe, 5, ["hello", "goodbye", "later"])]
         self.timebars, self.taskbars, self.percents, self.times, self.completions, self.buttons = [], [], [], [], [], []
         
         self.setup()
@@ -37,22 +42,22 @@ class HomeworkManager:
         red_style.configure("red.Horizontal.TProgressbar", foreground = self.RED, background = self.RED)
 
         for i in range(len(self.assignments)):
-            timebar = Progressbar(self.root, orient = HORIZONTAL, length = 300, style = "red.Horizontal.TProgressbar")
+            timebar = Progressbar(self.mainframe, orient = HORIZONTAL, length = 300, style = "red.Horizontal.TProgressbar")
             timebar.place(x = 100, y = self.MARGIN * i + 100)
 
-            taskbar = Progressbar(self.root, orient = HORIZONTAL, length = 300, style = "green.Horizontal.TProgressbar")
+            taskbar = Progressbar(self.mainframe, orient = HORIZONTAL, length = 300, style = "green.Horizontal.TProgressbar")
             taskbar.place(x = 100, y = self.MARGIN  * i + 125)
 
-            percent = Label(self.root, font=("Arial", 10), fg = self.RED, bg = self.BLACK)
+            percent = Label(self.mainframe, font=("Arial", 10), fg = self.RED, bg = self.BLACK)
             percent.place(x = 50, y = self.MARGIN * i + 100)
 
-            time = Label(self.root, font = ("Arial", 10), fg = self.WHITE, bg = self.BLACK)
+            time = Label(self.mainframe, font = ("Arial", 10), fg = self.WHITE, bg = self.BLACK)
             time.place(x = 200, y = self.MARGIN  * i + 150)
 
-            completion = Label(self.root, font = ("Arial", 10), fg = self.GREEN, bg = self.BLACK)
+            completion = Label(self.mainframe, font = ("Arial", 10), fg = self.GREEN, bg = self.BLACK)
             completion.place(x = 50, y = self.MARGIN * i + 125)
 
-            button = Button(self.root, font = ("Arial", 10, "bold"), text = "complete")
+            button = Button(self.mainframe, font = ("Arial", 10, "bold"), text = "complete")
             button.place(x = 200, y = self.MARGIN * i + 170)
 
             self.timebars.append(timebar)
@@ -117,8 +122,8 @@ class Task:
         self.inprogress.pack(side = TOP)
         self.incompleted.pack(side = TOP)
 
-        self.tasklist.bind("<Enter>", lambda event: self.ismouse(event, True))
-        self.tasklist.bind("<Leave>", lambda event: self.ismouse(event, False))
+        self.tasklist.bind("<Enter>", lambda event: self.is_on_mouse(event, True))
+        self.tasklist.bind("<Leave>", lambda event: self.is_on_mouse(event, False))
     
     def complete(self):
         if self.current < len(self.tasks):
@@ -149,11 +154,26 @@ class Task:
             self.incompleted.config(text = incomplete_tasklist.strip())
             self.inprogress.config(text = inprogress_tasklist.strip())
     
-    def ismouse(self, event, state):
+    def is_on_mouse(self, event, state):
         self.hovered = state
 
+class Scroller:
+    def __init__(self, mainframe):
+        self.canvas = Canvas(mainframe, bg = HomeworkManager.BLACK)
+        self.canvas.pack(side = LEFT, fill = BOTH, expand = TRUE)
 
+        self.scrollbar = Scrollbar(mainframe, orient = VERTICAL, command = self.canvas.yview)
+        self.scrollbar.pack(side = RIGHT, fill = Y)
 
+        self.canvas.configure(yscrollcommand = self.scrollbar.set)
+        self.canvas.bind("<Configure>", lambda event: self.canvas.configure(scrollregion = self.canvas.bbox("all")))
+
+        self.frame = Frame(self.canvas, bg = HomeworkManager.WHITE, padx = 10, pady = 10)
+        self.canvas.create_window((0,0), window = self.frame, anchor = NW)
+        self.frame.bind_all("<MouseWheel>", self.is_on_mouse)
+    
+    def is_on_mouse(self, event):
+        self.canvas.yview_scroll(-1 * int((event.delta / 120)), "units")
 
 root = Tk()
 app = HomeworkManager(root)
