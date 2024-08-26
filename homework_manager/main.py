@@ -36,7 +36,8 @@ class HomeworkManager:
         self.scroller = Scroller(self.mainframe)
 
         self.assignments, self.tasks = [], []
-        self.time_bars, self.task_bars, self.time_percents, self.task_percents, self.time_lefts, self.buttons = [], [], [], [], [], []
+        self.time_bars, self.task_bars, self.time_percents, self.task_percents, self.time_lefts = [], [], [], [], []
+        self.next_buttons, self.back_buttons, self.end_buttons = [], [], []
 
         # line of code taken from https://github.com/DaAppleTree/taskmanager/commit/fdd118ffdb49dad07c4627ef62bcc04dd2129c37
         os.chdir(os.path.dirname(os.path.realpath(__file__)))
@@ -46,7 +47,7 @@ class HomeworkManager:
 
         for i in range(0, len(lines), 2):
             line = lines[i].split()
-            self.assignments.append(Assignment(f"{line[2]} {line[3]}", f"{line[4]} {line[5]}", line[0], line[1]))
+            self.assignments.append(Assignment(f"{line[2]} {line[3]}", f"{line[4]} {line[5]}", line[0], line[1], i))
             line = lines[i+1].split(",")
             self.tasks.append(Task(line))
 
@@ -96,8 +97,18 @@ class HomeworkManager:
             time_left = Label(info, font = ("Arial", 10), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
             time_left.pack(side = TOP, pady = 10)
 
-            button = Button(info, font = ("Arial", 10, "bold"), text = "complete")
-            button.pack(side = TOP, pady = 10)
+            button_info = Frame(info, bg = HomeworkManager.BLACK, width = 300, height = 50)
+            button_info.pack_propagate(False)
+            button_info.pack(side = TOP, pady = 10)
+
+            next_button = Button(button_info, font = ("Arial", 10, "bold"), text = "complete")
+            next_button.pack(side = LEFT, padx = 10)
+
+            back_button = Button(button_info, font = ("Arial", 10, "bold"), text = "back")
+            back_button.pack(side = LEFT, padx = 10)
+
+            end_button = Button(button_info, font = ("Arial", 10, "bold"), text = "end")
+            end_button.pack(side = LEFT, padx = 10)
 
             self.tasks[i].place(unit)
 
@@ -106,7 +117,9 @@ class HomeworkManager:
             self.time_percents.append(time_percent)
             self.task_percents.append(task_percent)
             self.time_lefts.append(time_left)
-            self.buttons.append(button)
+            self.next_buttons.append(next_button)
+            self.back_buttons.append(back_button)
+            self.end_buttons.append(end_button)
 
         settings = Frame(self.scroller.frame, bg = HomeworkManager.BLACK, width = 200, height = 500)
         settings.pack_propagate(False)
@@ -148,22 +161,30 @@ class HomeworkManager:
             self.root.after(200, self.update_widgets)
 
     def update(self, i):
-        if self.time_bars[i]["value"] < 100 and self.task_bars[i] and not HomeworkManager.scrolling:
+        if not HomeworkManager.scrolling:
             passed = int((datetime.datetime.now()-self.assignments[i].start).total_seconds())
             interval = (self.assignments[i].end - self.assignments[i].start).total_seconds()
             passed_percent = int((passed / interval) * 100)
-            self.time_percents[i].config(text = f"{passed_percent}%")
-            self.task_percents[i].config(text = f"{int(((self.tasks[i].current) / len(self.tasks[i].tasks)) * 100)}%")
-
-            self.time_lefts[i].config(fg = f"#ff{hex(int(255 - math.pow(1.05, passed_percent)))[2:]}{hex(int(255 - math.pow(1.05, passed_percent)))[2:]}")
-            self.time_lefts[i].config(text = self.seconds_to_string(interval-passed) + " left")
-            self.buttons[i].config(command = lambda: self.tasks[i].complete())
 
             self.time_bars[i]["value"] = passed_percent
             self.task_bars[i]["value"] = ((self.tasks[i].current) / len(self.tasks[i].tasks)) * 100
 
-            self.tasks[i].show()
+            self.next_buttons[i].config(command = lambda: self.tasks[i].complete())
+            self.back_buttons[i].config(command = lambda: self.tasks[i].back())
+            self.end_buttons[i].config(command = lambda: self.end(i))
 
+            if self.time_bars[i]["value"] < 100 and self.task_bars[i]["value"] < 100:
+                self.time_percents[i].config(text = f"{passed_percent}%")
+                self.task_percents[i].config(text = f"{int(((self.tasks[i].current) / len(self.tasks[i].tasks)) * 100)}%")
+
+                self.time_lefts[i].config(fg = f"#ff{hex(int(255 - math.pow(1.05, passed_percent)))[2:]}{hex(int(255 - math.pow(1.05, passed_percent)))[2:]}")
+                self.time_lefts[i].config(text = self.seconds_to_string(interval-passed) + " left")
+
+                self.tasks[i].show()
+                self.end_buttons[i].pack_forget()
+
+            elif self.task_bars[i]["value"] == 100:
+                self.end_buttons[i].pack(side = LEFT, padx = 10)
             self.root.update_idletasks()
     
     def reorder(self, order):
@@ -192,7 +213,9 @@ class HomeworkManager:
         self.time_percents.clear()
         self.task_percents.clear()
         self.time_lefts.clear()
-        self.buttons.clear()
+        self.next_buttons.clear()
+        self.back_buttons.clear()
+        self.end_buttons.clear()
 
     def create_window(self):
         self.new_window = UserInput(self, "Create an Assignment")
@@ -211,14 +234,33 @@ class HomeworkManager:
         seconds = str(seconds) if abs(seconds) >= 10 else "0" + str(seconds)
 
         return f"{days}:{hours}:{minutes}:{seconds}"
+    
+    def end(self, index):
+        self.stop_updating()
+
+        with open("assignments.txt", "r+") as f:
+            lines = f.readlines()
+            f.seek(0)
+            for i in range(len(lines)):
+                if self.assignments[index].id != i // 2:
+                    f.write(lines[i])
+            f.truncate()
+
+        self.assignments.pop(index)
+        self.tasks.pop(index)
+
+        self.clear_widgets()
+        self.setup()
+
 
 class Assignment:
-    def __init__(self, start, end, title, topic):
+    def __init__(self, start, end, title, topic, id):
         self.start = datetime.datetime.strptime(start, "%Y/%m/%d %H:%M:%S")
         self.end = datetime.datetime.strptime(end, "%Y/%m/%d %H:%M:%S")
 
         self.title = title
         self.topic = topic
+        self.id = id
 
 
 class Task:
@@ -247,6 +289,10 @@ class Task:
     def complete(self):
         if self.current < len(self.tasks):
             self.current += 1
+
+    def back(self):
+        if self.current > 0:
+            self.current -= 1
     
     def show(self):
         if not self.hovered:
