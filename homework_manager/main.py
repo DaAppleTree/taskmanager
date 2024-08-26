@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import ttk, messagebox
 from tkinter.ttk import Progressbar
-import datetime, math
+import datetime, math, os
 
 class HomeworkManager: 
     
@@ -37,6 +37,16 @@ class HomeworkManager:
 
         self.assignments, self.tasks = [], []
         self.time_bars, self.task_bars, self.time_percents, self.task_percents, self.time_lefts, self.buttons = [], [], [], [], [], []
+
+        with open("assignments.txt", "r") as f:
+            lines = f.readlines()
+
+
+        for i in range(0, len(lines), 2):
+            line = lines[i].split()
+            self.assignments.append(Assignment(line[2], line[3], line[0], line[1]))
+            line = lines[i+1].split(",")
+            self.tasks.append(Task(line))
 
         self.setup()
     
@@ -322,6 +332,11 @@ class UserInput():
                 root.stop_updating()
                 root.assignments.append(Assignment(start, end, title, topic))
                 root.tasks.append(Task(tasks))
+
+                with open('assignments.txt', "a") as f:
+                    f.write(f"{title} {topic} {start} {end}\n")
+                    for i in range(len(tasks)):
+                        f.write(f"{tasks[i]} ")
 
                 root.clear_widgets()
                 root.setup()
