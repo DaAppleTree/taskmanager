@@ -12,6 +12,7 @@ class HomeworkManager:
     BLACK = "#000000"
 
     scrolling = False
+    updating = False
 
     def __init__(self, root):
         self.root = root
@@ -34,7 +35,7 @@ class HomeworkManager:
 
         self.scroller = Scroller(self.mainframe)
 
-        self.assignments = [Assignment("2023-08-22 19:00:00", "2024-08-26 22:30:00", 0), Assignment("2024-08-24 19:00:00", "2024-08-26 23:30:00", 1), Assignment("2024-01-01 00:00:00", "2025-01-01 00:00:00", 2), Assignment("2024-08-20 19:00:00", "2024-08-26 23:30:00", 3), Assignment("2024-08-20 19:00:00", "2024-08-26 23:30:00", 4), Assignment("2024-08-20 19:00:00", "2024-08-26 23:30:00", 5)]
+        self.assignments = [Assignment("2023-08-22 19:00:00", "2024-08-26 22:30:00", "Ya", "math"), Assignment("2024-08-24 19:00:00", "2024-08-26 23:30:00", "yipee", "math"), Assignment("2024-01-01 00:00:00", "2025-01-01 00:00:00", "wow", "science"), Assignment("2024-08-20 19:00:00", "2024-08-26 23:30:00", ":O", "science"), Assignment("2024-08-20 19:00:00", "2024-08-26 23:30:00", "o7", "english"), Assignment("2024-08-20 19:00:00", "2024-08-26 23:30:00", "yummy", "history")]
         self.tasks = [Task(["code", "complete"]), Task(["cry", "cry", "happy"]), Task(["no", "yes", "no", "yes"]), Task(["hi"]), Task(["HELLO, BYE"]), Task(["hello", "goodbye", "later"])]
         self.time_bars, self.task_bars, self.time_percents, self.task_percents, self.time_lefts, self.buttons = [], [], [], [], [], []
 
@@ -49,7 +50,16 @@ class HomeworkManager:
 
         for i in range(len(self.assignments)):
             unit = Frame(bars, bg = HomeworkManager.BLACK, bd = 5, relief = SUNKEN)
-            unit.pack(side = TOP)
+            unit.pack(side = TOP, pady = 10)
+
+            header = Frame(unit, bg = HomeworkManager.BLACK, width = 500, height = 50)
+            header.pack_propagate(False)
+            header.pack(side = TOP)
+
+            topic = Label(header, font = ("Arial", 10, "bold"), text = self.assignments[i].topic, fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+            topic.pack(side = TOP)
+            title = Label(header, font = ("Arial", 10), text = self.assignments[i].title, fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+            title.pack(side = TOP)
 
             info = Frame(unit, bg = HomeworkManager.BLACK)
             info.pack(side = LEFT)
@@ -58,7 +68,7 @@ class HomeworkManager:
             time_info.pack_propagate(False)
             time_info.pack(side = TOP)
 
-            time_percent = Label(time_info, font=("Arial", 10), fg = HomeworkManager.RED, bg = HomeworkManager.BLACK, width = 5, padx = 5, pady = 0)
+            time_percent = Label(time_info, font = ("Arial", 10), fg = HomeworkManager.RED, bg = HomeworkManager.BLACK, width = 5, padx = 5, pady = 0)
             time_percent.pack(side = LEFT)
             time_bar = Progressbar(time_info, orient = HORIZONTAL, length = 300, style = "red.Horizontal.TProgressbar")
             time_bar.pack(side = LEFT)
@@ -103,38 +113,45 @@ class HomeworkManager:
         sort_progress = Button(settings, font = ("Arial", 10, "bold"), text = "Progress", command = lambda: self.reorder("progress"))
         sort_progress.pack(side = TOP)
 
+        sort_topic = Button(settings, font = ("Arial", 10, "bold"), text = "Topic", command = lambda: self.reorder("topic"))
+        sort_topic.pack(side = TOP)
+
+        self.start_updating()
+
+    def start_updating(self):
+        HomeworkManager.updating = True
+        self.update_widgets()
+
+    def stop_updating(self):
+        HomeworkManager.updating = False
+
+    def update_widgets(self):
         for i in range(len(self.assignments)):
             self.update(i)
+        if HomeworkManager.updating:
+            self.root.after(200, self.update_widgets)
 
     def update(self, i):
-        if self.time_bars[i]["value"] < 100 and self.task_bars[i]:
-            if not HomeworkManager.scrolling:
-                passed = int((datetime.datetime.now()-self.assignments[i].start).total_seconds())
-                interval = (self.assignments[i].end - self.assignments[i].start).total_seconds()
-                passed_percent = int((passed / interval) * 100)
-                self.time_percents[i].config(text = f"{passed_percent}%")
-                self.task_percents[i].config(text = f"{int(((self.tasks[i].current) / len(self.tasks[i].tasks)) * 100)}%")
+        if self.time_bars[i]["value"] < 100 and self.task_bars[i] and not HomeworkManager.scrolling:
+            passed = int((datetime.datetime.now()-self.assignments[i].start).total_seconds())
+            interval = (self.assignments[i].end - self.assignments[i].start).total_seconds()
+            passed_percent = int((passed / interval) * 100)
+            self.time_percents[i].config(text = f"{passed_percent}%")
+            self.task_percents[i].config(text = f"{int(((self.tasks[i].current) / len(self.tasks[i].tasks)) * 100)}%")
 
-                self.time_lefts[i].config(fg = f"#ff{hex(int(255 - math.pow(1.05, passed_percent)))[2:]}{hex(int(255 - math.pow(1.05, passed_percent)))[2:]}")
-                self.time_lefts[i].config(text = self.seconds_to_string(interval-passed) + " left")
-                self.buttons[i].config(command = lambda: self.tasks[i].complete())
+            self.time_lefts[i].config(fg = f"#ff{hex(int(255 - math.pow(1.05, passed_percent)))[2:]}{hex(int(255 - math.pow(1.05, passed_percent)))[2:]}")
+            self.time_lefts[i].config(text = self.seconds_to_string(interval-passed) + " left")
+            self.buttons[i].config(command = lambda: self.tasks[i].complete())
 
-                self.time_bars[i]["value"] = passed_percent
-                self.task_bars[i]["value"] = ((self.tasks[i].current) / len(self.tasks[i].tasks)) * 100
+            self.time_bars[i]["value"] = passed_percent
+            self.task_bars[i]["value"] = ((self.tasks[i].current) / len(self.tasks[i].tasks)) * 100
 
-                self.tasks[i].show()
+            self.tasks[i].show()
 
-                self.root.update_idletasks()
-                self.root.after(200, self.update, i)
+            self.root.update_idletasks()
     
     def reorder(self, order):
-        self.time_bars.clear()
-        self.task_bars.clear()
-        self.time_percents.clear()
-        self.task_percents.clear()
-        self.time_lefts.clear()
-        self.buttons.clear()
-
+        self.stop_updating()
         if order == "time":
             now = datetime.datetime.now()
             self.assignments, self.tasks = zip(*sorted(zip(self.assignments, self.tasks), key = lambda a : (a[0].end - now).total_seconds()))
@@ -143,9 +160,18 @@ class HomeworkManager:
             self.assignments, self.tasks = zip(*sorted(zip(self.assignments, self.tasks), key = lambda a : (a[0].end - now).total_seconds() / (a[0].end - a[0].start).total_seconds()))
         elif order == "progress":
             self.assignments, self.tasks = zip(*sorted(zip(self.assignments, self.tasks), key = lambda a : (a[1].current / len(a[1].tasks))))
+        elif order == "topic":
+            self.assignments, self.tasks = zip(*sorted(zip(self.assignments, self.tasks), key = lambda a : (a[0].topic)))
 
         for widget in self.scroller.frame.winfo_children():
             widget.destroy()
+        self.time_bars.clear()
+        self.task_bars.clear()
+        self.time_percents.clear()
+        self.task_percents.clear()
+        self.time_lefts.clear()
+        self.buttons.clear()
+
         self.setup()
 
     def seconds_to_string(self, seconds):
@@ -164,10 +190,12 @@ class HomeworkManager:
         return f"{days}:{hours}:{minutes}:{seconds}"
 
 class Assignment:
-    def __init__(self, start, end, pos):
+    def __init__(self, start, end, title, topic):
         self.start = datetime.datetime.strptime(start, "%Y-%m-%d %H:%M:%S")
         self.end = datetime.datetime.strptime(end, "%Y-%m-%d %H:%M:%S")
-        self.pos = pos
+
+        self.title = title
+        self.topic = topic
 
 
 class Task:
@@ -225,6 +253,7 @@ class Task:
     def is_on_mouse(self, event, state):
         self.hovered = state
 
+# https://www.youtube.com/watch?v=0WafQCaok6g
 class Scroller:
     def __init__(self, mainframe):
         self.canvas = Canvas(mainframe, bg = HomeworkManager.BLACK)
@@ -252,7 +281,6 @@ class Scroller:
     def stop_scrolling(self, event):
         HomeworkManager.scrolling = False
         self.is_scrolling = False
-        print("we good")
         
 root = Tk()
 app = HomeworkManager(root)
