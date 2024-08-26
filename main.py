@@ -116,6 +116,9 @@ class HomeworkManager:
         sort_topic = Button(settings, font = ("Arial", 10, "bold"), text = "Topic", command = lambda: self.reorder("topic"))
         sort_topic.pack(side = TOP)
 
+        add = Button(settings, font = ("Arial", 10, "bold"), text = "Add assignment", command = lambda: self.create_window())
+        add.pack(side = TOP)
+
         self.start_updating()
 
     def start_updating(self):
@@ -173,6 +176,9 @@ class HomeworkManager:
         self.buttons.clear()
 
         self.setup()
+
+    def create_window(self):
+        self.new_window = UserInput(self.root, "Hi")
 
     def seconds_to_string(self, seconds):
         days = int(seconds//(60*60*24))
@@ -252,6 +258,25 @@ class Task:
     
     def is_on_mouse(self, event, state):
         self.hovered = state
+
+class UserInput():
+    def __init__(self, root, name):
+        self.window = Toplevel()
+        self.window.title(name)
+        self.root = root
+
+        self.questions = ["Title", "Topic", "Start Time", "End Time", "Tasks"]
+
+        for i in range(len(self.questions)):
+            self.frame = Frame(self.window, bg = HomeworkManager.BLACK, width = 200, height = 50)
+            self.frame.pack_propagate(False)
+            self.frame.pack(side = TOP)
+
+            self.label = Label(self.frame, font = ("Ink Free", 10, "bold"), text = self.questions[i], fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+            self.label.pack(side = TOP)
+
+            self.entry = Entry(self.frame, font = ("Arial", 10), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+            self.entry.pack(side = TOP)
 
 # https://www.youtube.com/watch?v=0WafQCaok6g
 class Scroller:
