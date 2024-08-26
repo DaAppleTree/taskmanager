@@ -157,15 +157,21 @@ class HomeworkManager:
         self.stop_updating()
         if order == "time":
             now = datetime.datetime.now()
-            self.assignments, self.tasks = zip(*sorted(zip(self.assignments, self.tasks), key = lambda a : (a[0].end - now).total_seconds()))
+            sorted_data = sorted(zip(self.assignments, self.tasks), key = lambda a : (a[0].end - now).total_seconds())
         elif order == "time%":
             now = datetime.datetime.now()
-            self.assignments, self.tasks = zip(*sorted(zip(self.assignments, self.tasks), key = lambda a : (a[0].end - now).total_seconds() / (a[0].end - a[0].start).total_seconds()))
+            sorted_data = sorted(zip(self.assignments, self.tasks), key = lambda a : (a[0].end - now).total_seconds() / (a[0].end - a[0].start).total_seconds())
         elif order == "progress":
-            self.assignments, self.tasks = zip(*sorted(zip(self.assignments, self.tasks), key = lambda a : (a[1].current / len(a[1].tasks))))
+            sorted_data = sorted(zip(self.assignments, self.tasks), key = lambda a : (a[1].current / len(a[1].tasks)))
         elif order == "topic":
-            self.assignments, self.tasks = zip(*sorted(zip(self.assignments, self.tasks), key = lambda a : (a[0].topic)))
+            sorted_data = sorted(zip(self.assignments, self.tasks), key = lambda a : (a[0].topic))
+        
+        self.assignments, self.tasks = map(list, zip(*sorted_data))
 
+        self.clear_widgets()
+        self.setup()
+
+    def clear_widgets(self):
         for widget in self.scroller.frame.winfo_children():
             widget.destroy()
         self.time_bars.clear()
@@ -175,10 +181,8 @@ class HomeworkManager:
         self.time_lefts.clear()
         self.buttons.clear()
 
-        self.setup()
-
     def create_window(self):
-        self.new_window = UserInput(self.root, "Hi")
+        self.new_window = UserInput(self, "Hi")
 
     def seconds_to_string(self, seconds):
         days = int(seconds//(60*60*24))
@@ -263,9 +267,11 @@ class UserInput():
     def __init__(self, root, name):
         self.window = Toplevel()
         self.window.title(name)
-        self.root = root
 
         self.questions = ["Title", "Topic", "Start Time", "End Time", "Tasks"]
+        # 2024-08-20 19:19:19
+
+        self.entries = []
 
         for i in range(len(self.questions)):
             self.frame = Frame(self.window, bg = HomeworkManager.BLACK, width = 200, height = 50)
@@ -277,6 +283,20 @@ class UserInput():
 
             self.entry = Entry(self.frame, font = ("Arial", 10), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
             self.entry.pack(side = TOP)
+            self.entries.append(self.entry)
+
+        self.submit = Button(self.frame, text = "Submit", command = lambda: self.update(root))
+        self.submit.pack(side = TOP)
+
+    def update(self, root):
+        root.stop_updating()
+        root.assignments.append(Assignment(self.entries[2].get(), self.entries[3].get(), self.entries[0].get(), self.entries[1].get()))
+        root.tasks.append(Task(self.entries[4].get().split("\n")))
+
+        root.clear_widgets()
+        root.setup()
+        root.scroller.canvas.configure(scrollregion=root.scroller.canvas.bbox("all"))
+
 
 # https://www.youtube.com/watch?v=0WafQCaok6g
 class Scroller:
