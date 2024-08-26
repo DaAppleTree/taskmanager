@@ -36,11 +36,11 @@ class HomeworkManager:
 
         green_style = ttk.Style()
         green_style.theme_use("clam")
-        green_style.configure("green.Horizontal.TProgressbar", foreground = self.GREEN, background = self.GREEN)
+        green_style.configure("green.Horizontal.TProgressbar", foreground = HomeworkManager.GREEN, background = HomeworkManager.GREEN)
 
         red_style = ttk.Style()
         red_style.theme_use("clam")
-        red_style.configure("red.Horizontal.TProgressbar", foreground = self.RED, background = self.RED)
+        red_style.configure("red.Horizontal.TProgressbar", foreground = HomeworkManager.RED, background = HomeworkManager.RED)
 
         bars = Frame(self.scroller.frame, bg = HomeworkManager.BLACK)
         bars.pack(side = LEFT)
@@ -56,7 +56,7 @@ class HomeworkManager:
             time_info.pack_propagate(False)
             time_info.pack(side = TOP)
 
-            time_percent = Label(time_info, font=("Arial", 10), fg = self.RED, bg = self.BLACK, width = 5, padx = 5, pady = 0)
+            time_percent = Label(time_info, font=("Arial", 10), fg = HomeworkManager.RED, bg = HomeworkManager.BLACK, width = 5, padx = 5, pady = 0)
             time_percent.pack(side = LEFT)
             time_bar = Progressbar(time_info, orient = HORIZONTAL, length = 300, style = "red.Horizontal.TProgressbar")
             time_bar.pack(side = LEFT)
@@ -65,12 +65,12 @@ class HomeworkManager:
             task_info.pack_propagate(False)
             task_info.pack(side = TOP)
             
-            task_percent = Label(task_info, font = ("Arial", 10), fg = self.GREEN, bg = self.BLACK, width = 5, padx = 5, pady = 0)
+            task_percent = Label(task_info, font = ("Arial", 10), fg = HomeworkManager.GREEN, bg = HomeworkManager.BLACK, width = 5, padx = 5, pady = 0)
             task_percent.pack(side = LEFT)
             task_bar = Progressbar(task_info, orient = HORIZONTAL, length = 300, style = "green.Horizontal.TProgressbar")
             task_bar.pack(side = LEFT)
 
-            time_left = Label(info, font = ("Arial", 10), fg = self.WHITE, bg = self.BLACK)
+            time_left = Label(info, font = ("Arial", 10), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
             time_left.pack(side = TOP, pady = 10)
 
             button = Button(info, font = ("Arial", 10, "bold"), text = "complete")
@@ -85,14 +85,24 @@ class HomeworkManager:
             self.time_lefts.append(time_left)
             self.buttons.append(button)
 
-        settings = Frame(self.scroller.frame, bg = HomeworkManager.WHITE)
+        settings = Frame(self.scroller.frame, bg = HomeworkManager.BLACK, width = 100, height = 500)
+        settings.pack_propagate(False)
         settings.pack(side = TOP)
 
-        sort_time = Button(settings, font = ("Arial", 10, "bold"), text = "Time", command = lambda: self.reorder(1))
+        sort_label = Label(settings, font = ("Arial", 10, "bold"), text = "Sort by", fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+        sort_label.pack(side = TOP, pady = 10)
+
+        sort_time = Button(settings, font = ("Arial", 10, "bold"), text = "Time", command = lambda: self.reorder("time"))
         sort_time.pack(side = TOP)
 
+        sort_time_percent = Button(settings, font = ("Arial", 10, "bold"), text = "Time%", command = lambda: self.reorder("time%"))
+        sort_time_percent.pack(side = TOP)
+
+        sort_progress = Button(settings, font = ("Arial", 10, "bold"), text = "Progress", command = lambda: self.reorder("progress"))
+        sort_progress.pack(side = TOP)
+
         for i in range(len(self.assignments)):
-            self.update(self.assignments[i].pos)
+            self.update(i)
 
     def update(self, i):
         if self.time_bars[i]["value"] < 100 and self.task_bars[i]:
@@ -114,20 +124,26 @@ class HomeworkManager:
             self.tasks[i].show()
 
             self.root.update_idletasks()
-            self.root.after(100, self.update, self.assignments[i].pos)
-        
-    def reorder(self, n):
-        a = self.assignments.copy()
-        if n == 1:
-            checked = []
-            for x in range(len(a)):
-                min = -1
-                for i in range(len(a)):
-                    if ((a[i].end-a[i].start).total_seconds() - int((datetime.datetime.now()-a[i].start).total_seconds()) < min or min == -1) and i not in checked:
-                        min = (a[i].end-a[i].start).total_seconds() - int((datetime.datetime.now()-a[i].start).total_seconds())
-                        index = i
-                self.assignments[index].pos = x
-                checked.append(index)
+            self.root.after(100, self.update, i)
+    
+    def reorder(self, order):
+        self.time_bars.clear()
+        self.task_bars.clear()
+        self.time_percents.clear()
+        self.task_percents.clear()
+        self.time_lefts.clear()
+        self.buttons.clear()
+
+        if order == "time":
+            self.assignments, self.tasks = zip(*sorted(zip(self.assignments, self.tasks), key = lambda a : (a[0].end - datetime.datetime.now()).total_seconds()))
+        elif order == "time%":
+            self.assignments, self.tasks = zip(*sorted(zip(self.assignments, self.tasks), key = lambda a : (a[0].end - datetime.datetime.now()).total_seconds() / (a[0].end - a[0].start).total_seconds()))
+        elif order == "progress":
+            self.assignments, self.tasks = zip(*sorted(zip(self.assignments, self.tasks), key = lambda a : (a[1].current / len(a[1].tasks))))
+
+        for widget in self.scroller.frame.winfo_children():
+            widget.destroy()
+        self.setup()
 
     def seconds_to_string(self, seconds):
         days = int(seconds//(60*60*24))
