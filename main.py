@@ -1,5 +1,5 @@
 from tkinter import *
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from tkinter.ttk import Progressbar
 import datetime, math
 
@@ -35,8 +35,7 @@ class HomeworkManager:
 
         self.scroller = Scroller(self.mainframe)
 
-        self.assignments = [Assignment("2023-08-22 19:00:00", "2024-08-26 22:30:00", "Ya", "math"), Assignment("2024-08-24 19:00:00", "2024-08-26 23:30:00", "yipee", "math"), Assignment("2024-01-01 00:00:00", "2025-01-01 00:00:00", "wow", "science"), Assignment("2024-08-20 19:00:00", "2024-08-26 23:30:00", ":O", "science"), Assignment("2024-08-20 19:00:00", "2024-08-26 23:30:00", "o7", "english"), Assignment("2024-08-20 19:00:00", "2024-08-26 23:30:00", "yummy", "history")]
-        self.tasks = [Task(["code", "complete"]), Task(["cry", "cry", "happy"]), Task(["no", "yes", "no", "yes"]), Task(["hi"]), Task(["HELLO, BYE"]), Task(["hello", "goodbye", "later"])]
+        self.assignments, self.tasks = [], []
         self.time_bars, self.task_bars, self.time_percents, self.task_percents, self.time_lefts, self.buttons = [], [], [], [], [], []
 
         self.setup()
@@ -97,7 +96,7 @@ class HomeworkManager:
             self.time_lefts.append(time_left)
             self.buttons.append(button)
 
-        settings = Frame(self.scroller.frame, bg = HomeworkManager.BLACK, width = 100, height = 500)
+        settings = Frame(self.scroller.frame, bg = HomeworkManager.BLACK, width = 200, height = 500)
         settings.pack_propagate(False)
         settings.pack(side = TOP)
 
@@ -116,6 +115,8 @@ class HomeworkManager:
         sort_topic = Button(settings, font = ("Arial", 10, "bold"), text = "Topic", command = lambda: self.reorder("topic"))
         sort_topic.pack(side = TOP)
 
+        add_label = Label(settings, font = ("Arial", 10, "bold"), text = "Add an assignment", fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+        add_label.pack(side = TOP)
         add = Button(settings, font = ("Arial", 10, "bold"), text = "Add assignment", command = lambda: self.create_window())
         add.pack(side = TOP)
 
@@ -182,7 +183,7 @@ class HomeworkManager:
         self.buttons.clear()
 
     def create_window(self):
-        self.new_window = UserInput(self, "Hi")
+        self.new_window = UserInput(self, "Create an Assignment")
 
     def seconds_to_string(self, seconds):
         days = int(seconds//(60*60*24))
@@ -201,8 +202,8 @@ class HomeworkManager:
 
 class Assignment:
     def __init__(self, start, end, title, topic):
-        self.start = datetime.datetime.strptime(start, "%Y-%m-%d %H:%M:%S")
-        self.end = datetime.datetime.strptime(end, "%Y-%m-%d %H:%M:%S")
+        self.start = datetime.datetime.strptime(start, "%Y/%m/%d %H:%M:%S")
+        self.end = datetime.datetime.strptime(end, "%Y/%m/%d %H:%M:%S")
 
         self.title = title
         self.topic = topic
@@ -267,6 +268,9 @@ class UserInput():
     def __init__(self, root, name):
         self.window = Toplevel()
         self.window.title(name)
+        self.window.geometry("200x400")
+        self.window.config(background = HomeworkManager.BLACK)
+        self.window.resizable(False, False)
 
         self.questions = ["Title", "Topic", "Start Time", "End Time", "Tasks"]
         # 2024-08-20 19:19:19
@@ -285,20 +289,51 @@ class UserInput():
             self.entry.pack(side = TOP)
             self.entries.append(self.entry)
 
-        self.submit = Button(self.frame, text = "Submit", command = lambda: self.update(root))
+        self.submit = Button(self.window, text = "Submit", command = lambda: self.update(root))
         self.submit.pack(side = TOP)
 
+        self.reset = Button(self.window, text = "Reset", command = lambda: self.clear())
+        self.reset.pack(side = TOP)
+
     def update(self, root):
-        root.stop_updating()
-        root.assignments.append(Assignment(self.entries[2].get(), self.entries[3].get(), self.entries[0].get(), self.entries[1].get()))
-        root.tasks.append(Task(self.entries[4].get().split("\n")))
+        title, topic, start, end = self.entries[0].get().strip(), self.entries[1].get().strip(), self.entries[2].get().strip(), self.entries[3].get().strip()
+        
+        if len(start) == 10:
+            start += " 23:59:59"
+        if len(end) == 10:
+            end += " 23:59:59"
+            
+        try:
+            starttime = datetime.datetime.strptime(start, "%Y/%m/%d %H:%M:%S")
+            endtime = datetime.datetime.strptime(end, "%Y/%m/%d %H:%M:%S")
+        except:
+            messagebox.showwarning(title = "Formatting Error", message = "Please enter times in the format YYYY/MM/DD HH-MM-SS")
+        else:
+            now = datetime.datetime.now()
+            if (now - starttime).total_seconds() < 0:
+                messagebox.showwarning(title = "Time Error", message = "Please ensure start time is before current time")
+            elif (endtime - now).total_seconds() < 0:
+                messagebox.showwarning(title = "Time Error", message = "Please ensure end time is after current time")
+            else:
+                tasks = self.entries[4].get().split(",")
+                for i in range(len(tasks)):
+                    tasks[i].strip()
 
-        root.clear_widgets()
-        root.setup()
-        root.scroller.canvas.configure(scrollregion=root.scroller.canvas.bbox("all"))
+                root.stop_updating()
+                root.assignments.append(Assignment(start, end, title, topic))
+                root.tasks.append(Task(tasks))
+
+                root.clear_widgets()
+                root.setup()
+                root.scroller.canvas.configure(scrollregion=root.scroller.canvas.bbox("all"))
+                self.window.destroy()
+        
+    def clear(self):
+        for i in range(len(self.entries)):
+            self.entries[i].delete(0, END)
 
 
-# https://www.youtube.com/watch?v=0WafQCaok6g
+# some code taken from https://www.youtube.com/watch?v=0WafQCaok6g
 class Scroller:
     def __init__(self, mainframe):
         self.canvas = Canvas(mainframe, bg = HomeworkManager.BLACK)
