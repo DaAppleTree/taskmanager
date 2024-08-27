@@ -17,7 +17,7 @@ class HomeworkManager:
     def __init__(self, root):
         self.root = root
         self.root.title("Homework Manager")
-        self.root.geometry("900x600")
+        self.root.geometry("1000x600")
         self.root.config(background = "#000000")
         self.root.resizable(False, False)
 
@@ -144,7 +144,9 @@ class HomeworkManager:
         sort_topic = Button(settings, font = ("Constantia", 10, "bold"), text = "Topic", command = lambda: self.reorder("topic"))
         sort_topic.pack(side = TOP, pady = 10)
 
-        calendar_frame = Frame(settings)
+        calendar_frame = Frame(self.scroller.frame, bg = HomeworkManager.BLACK, bd = 5, relief = RAISED, width = 300, height = 400)
+        calendar_frame.pack_propagate(False)
+        calendar_frame.pack(side = TOP, padx = 15)
         self.calendar = Calendar(calendar_frame, "24", "08")
         calendar_frame.pack()
 
@@ -457,23 +459,31 @@ class Calendar:
 
         cal = calendar.monthcalendar(self.year, self.month)
 
-        weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        weekdays = ["M", "T", "W", "T", "F", "S", "S"]
 
         for i in range(len(weekdays)):
-            label = Label(root, text = weekdays[i], font = ("Constantia", 10, "bold"), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
-            label.grid(row = 0, column = i)
+            column = Frame(self.calendar, bg = HomeworkManager.BLACK, width = 30, height = 400)
+            column.pack_propagate(False)
+            column.pack(side = LEFT)
 
-        for week in range(len(cal)):
-            for day in range(len(cal[week])):
-                if cal[week][day] != 0:
-                    button = Button(root, text = str(cal[week][day]), command  = lambda : self.clicked(cal[week][day]))
-                    button.grid(row = week + 1, column = day)
+            header = Label(column, text = weekdays[i], font = ("Constantia", 10, "bold"), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK, width = 2, height = 2)
+            header.pack(side = TOP)
+            print(cal)
+            for week in range(len(cal)):
+                for day in range(len(cal[week])):
+                    if day == i:
+                        if cal[week][day] != 0:
+                            button = Button(column, text = str(cal[week][day]), command  = lambda d = cal[week][day]: self.clicked(d), width = 2, height = 1)
+                            button.pack(side = TOP, pady = 2)
+                        else:
+                            button = Button(column, width = 2, height = 1, bg = HomeworkManager.BLACK)
+                            button.pack(side = TOP, pady = 2)
 
-        self.description = Label(root, fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
-        self.description.grid(row = len(cal)+1, column = 0)
+        self.description = Label(self.calendar, fg = HomeworkManager.WHITE, bg = HomeworkManager.GREEN)
+        self.description.pack(side = BOTTOM)
 
     def clicked(self, day):
-        self.description.config(f"You clicked {self.year}/{self.month}/{day}")
+        self.description.config(text = f"You clicked {self.year}/{self.month}/{day}")
 
 root = Tk()
 app = HomeworkManager(root)
