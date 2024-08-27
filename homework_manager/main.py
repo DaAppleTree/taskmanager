@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import ttk, messagebox
 from tkinter.ttk import Progressbar
-import datetime, math, os
+import datetime, math, os, calendar
 
 class HomeworkManager: 
     
@@ -39,7 +39,7 @@ class HomeworkManager:
         self.time_bars, self.task_bars, self.time_percents, self.task_percents, self.time_lefts = [], [], [], [], []
         self.next_buttons, self.back_buttons, self.end_buttons = [], [], []
 
-        # line of code taken from https://github.com/DaAppleTree/taskmanager/commit/fdd118ffdb49dad07c4627ef62bcc04dd2129c37
+        # line of code taken from https://stackoverflow.com/questions/509742/change-directory-to-the-directory-of-a-python-script
         os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
         with open("assignments.txt", "r") as f:
@@ -143,6 +143,10 @@ class HomeworkManager:
 
         sort_topic = Button(settings, font = ("Constantia", 10, "bold"), text = "Topic", command = lambda: self.reorder("topic"))
         sort_topic.pack(side = TOP, pady = 10)
+
+        calendar_frame = Frame(settings)
+        self.calendar = Calendar(calendar_frame, "24", "08")
+        calendar_frame.pack()
 
         self.start_updating()
 
@@ -305,7 +309,7 @@ class Task:
                 if i - 2 != self.id:
                     f.write(lines[i])
                 else:
-                    f.write(f"{self.current}")
+                    f.write(f"{self.current}\n")
             f.truncate()
     
     def show(self):
@@ -442,7 +446,35 @@ class Scroller:
     def stop_scrolling(self, event):
         HomeworkManager.scrolling = False
         self.is_scrolling = False
-        
+
+class Calendar:
+    def __init__(self, root, year, month):
+        self.year = int(year)
+        self.month = int(month)
+
+        self.calendar = Frame(root, bg = HomeworkManager.BLACK, padx = 10, pady = 10)
+        self.calendar.pack()
+
+        cal = calendar.monthcalendar(self.year, self.month)
+
+        weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+        for i in range(len(weekdays)):
+            label = Label(root, text = weekdays[i], font = ("Constantia", 10, "bold"), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+            label.grid(row = 0, column = i)
+
+        for week in range(len(cal)):
+            for day in range(len(cal[week])):
+                if cal[week][day] != 0:
+                    button = Button(root, text = str(cal[week][day]), command  = lambda : self.clicked(cal[week][day]))
+                    button.grid(row = week + 1, column = day)
+
+        self.description = Label(root, fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+        self.description.grid(row = len(cal)+1, column = 0)
+
+    def clicked(self, day):
+        self.description.config(f"You clicked {self.year}/{self.month}/{day}")
+
 root = Tk()
 app = HomeworkManager(root)
 root.mainloop()
