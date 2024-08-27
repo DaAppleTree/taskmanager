@@ -17,7 +17,7 @@ class HomeworkManager:
     def __init__(self, root):
         self.root = root
         self.root.title("Homework Manager")
-        self.root.geometry("1000x500")
+        self.root.geometry("900x600")
         self.root.config(background = "#000000")
         self.root.resizable(False, False)
 
@@ -45,32 +45,31 @@ class HomeworkManager:
         with open("assignments.txt", "r") as f:
             lines = f.readlines()
 
-        for i in range(0, len(lines), 2):
+        for i in range(0, len(lines), 3):
             line = lines[i].split()
             self.assignments.append(Assignment(f"{line[2]} {line[3]}", f"{line[4]} {line[5]}", line[0], line[1], i))
-            line = lines[i+1].split(",")
-            self.tasks.append(Task(line))
+            self.tasks.append(Task(lines[i+1].split(","), int(lines[i+2]), i))
 
         self.setup()
     
     def setup(self):
-        label = Label(self.scroller.frame, text = "Task Progress:", font=("Arial", 20, "bold"), fg = "#5c9bb7", bg = "#000000")
+        label = Label(self.scroller.frame, text = "Homework Manager", font=("Constantia", 30, "bold"), fg = "#5c9bb7", bg = "#000000")
         label.pack(side = TOP)
 
         bars = Frame(self.scroller.frame, bg = HomeworkManager.BLACK)
         bars.pack(side = LEFT)
 
         for i in range(len(self.assignments)):
-            unit = Frame(bars, bg = HomeworkManager.BLACK, bd = 5, relief = SUNKEN)
-            unit.pack(side = TOP, pady = 10)
+            unit = Frame(bars, bg = HomeworkManager.BLACK, bd = 5, relief = RAISED, width = 600, height = 300)
+            unit.pack_propagate(False)
+            unit.pack(side = TOP, pady = 10, padx = 15)
 
-            header = Frame(unit, bg = HomeworkManager.BLACK, width = 500, height = 50)
-            header.pack_propagate(False)
+            header = Frame(unit, bg = HomeworkManager.BLACK)
             header.pack(side = TOP)
 
-            topic = Label(header, font = ("Arial", 10, "bold"), text = self.assignments[i].topic, fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+            topic = Label(header, font = ("Constantia", 20, "bold"), text = self.assignments[i].topic, fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
             topic.pack(side = TOP)
-            title = Label(header, font = ("Arial", 10), text = self.assignments[i].title, fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+            title = Label(header, font = ("Constantia", 15), text = self.assignments[i].title, fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
             title.pack(side = TOP)
 
             info = Frame(unit, bg = HomeworkManager.BLACK)
@@ -80,7 +79,7 @@ class HomeworkManager:
             time_info.pack_propagate(False)
             time_info.pack(side = TOP)
 
-            time_percent = Label(time_info, font = ("Arial", 10), fg = HomeworkManager.RED, bg = HomeworkManager.BLACK, width = 5, padx = 5, pady = 0)
+            time_percent = Label(time_info, font = ("Constantia", 15), fg = HomeworkManager.RED, bg = HomeworkManager.BLACK, width = 5, padx = 5, pady = 0)
             time_percent.pack(side = LEFT)
             time_bar = Progressbar(time_info, orient = HORIZONTAL, length = 300, style = "red.Horizontal.TProgressbar")
             time_bar.pack(side = LEFT)
@@ -89,25 +88,25 @@ class HomeworkManager:
             task_info.pack_propagate(False)
             task_info.pack(side = TOP)
             
-            task_percent = Label(task_info, font = ("Arial", 10), fg = HomeworkManager.GREEN, bg = HomeworkManager.BLACK, width = 5, padx = 5, pady = 0)
+            task_percent = Label(task_info, font = ("Constantia", 15), fg = HomeworkManager.GREEN, bg = HomeworkManager.BLACK, width = 5, padx = 5, pady = 0)
             task_percent.pack(side = LEFT)
             task_bar = Progressbar(task_info, orient = HORIZONTAL, length = 300, style = "green.Horizontal.TProgressbar")
             task_bar.pack(side = LEFT)
 
-            time_left = Label(info, font = ("Arial", 10), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+            time_left = Label(info, font = ("Constantia", 15), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
             time_left.pack(side = TOP, pady = 10)
 
             button_info = Frame(info, bg = HomeworkManager.BLACK, width = 300, height = 50)
             button_info.pack_propagate(False)
             button_info.pack(side = TOP, pady = 10)
 
-            next_button = Button(button_info, font = ("Arial", 10, "bold"), text = "complete")
+            next_button = Button(button_info, font = ("Constantia", 10, "bold"), text = "complete")
             next_button.pack(side = LEFT, padx = 10)
 
-            back_button = Button(button_info, font = ("Arial", 10, "bold"), text = "back")
+            back_button = Button(button_info, font = ("Constantia", 10, "bold"), text = "back")
             back_button.pack(side = LEFT, padx = 10)
 
-            end_button = Button(button_info, font = ("Arial", 10, "bold"), text = "end")
+            end_button = Button(button_info, font = ("Constantia", 10, "bold"), text = "end")
             end_button.pack(side = LEFT, padx = 10)
 
             self.tasks[i].place(unit)
@@ -121,29 +120,29 @@ class HomeworkManager:
             self.back_buttons.append(back_button)
             self.end_buttons.append(end_button)
 
-        settings = Frame(self.scroller.frame, bg = HomeworkManager.BLACK, width = 200, height = 500)
+        settings = Frame(self.scroller.frame, bg = HomeworkManager.BLACK, bd = 5, relief = RAISED, width = 200, height = 400)
         settings.pack_propagate(False)
-        settings.pack(side = TOP)
+        settings.pack(side = TOP, padx = 15)
 
-        sort_label = Label(settings, font = ("Arial", 10, "bold"), text = "Sort by", fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+        add_label = Label(settings, font = ("Constantia", 15, "bold"), text = "Add", fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+        add_label.pack(side = TOP, pady = 10)
+        add = Button(settings, font = ("Constantia", 10, "bold"), text = "Add assignment", command = lambda: self.create_window())
+        add.pack(side = TOP, pady = 10)
+
+        sort_label = Label(settings, font = ("Constantia", 15, "bold"), text = "Sort by", fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
         sort_label.pack(side = TOP, pady = 10)
 
-        sort_time = Button(settings, font = ("Arial", 10, "bold"), text = "Time", command = lambda: self.reorder("time"))
-        sort_time.pack(side = TOP)
+        sort_time = Button(settings, font = ("Constantia", 10, "bold"), text = "Time", command = lambda: self.reorder("time"))
+        sort_time.pack(side = TOP, pady = 10)
 
-        sort_time_percent = Button(settings, font = ("Arial", 10, "bold"), text = "Time%", command = lambda: self.reorder("time%"))
-        sort_time_percent.pack(side = TOP)
+        sort_time_percent = Button(settings, font = ("Constantia", 10, "bold"), text = "Time%", command = lambda: self.reorder("time%"))
+        sort_time_percent.pack(side = TOP, pady = 10)
 
-        sort_progress = Button(settings, font = ("Arial", 10, "bold"), text = "Progress", command = lambda: self.reorder("progress"))
-        sort_progress.pack(side = TOP)
+        sort_progress = Button(settings, font = ("Constantia", 10, "bold"), text = "Progress", command = lambda: self.reorder("progress"))
+        sort_progress.pack(side = TOP, pady = 10)
 
-        sort_topic = Button(settings, font = ("Arial", 10, "bold"), text = "Topic", command = lambda: self.reorder("topic"))
-        sort_topic.pack(side = TOP)
-
-        add_label = Label(settings, font = ("Arial", 10, "bold"), text = "Add an assignment", fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
-        add_label.pack(side = TOP)
-        add = Button(settings, font = ("Arial", 10, "bold"), text = "Add assignment", command = lambda: self.create_window())
-        add.pack(side = TOP)
+        sort_topic = Button(settings, font = ("Constantia", 10, "bold"), text = "Topic", command = lambda: self.reorder("topic"))
+        sort_topic.pack(side = TOP, pady = 10)
 
         self.start_updating()
 
@@ -173,14 +172,15 @@ class HomeworkManager:
             self.back_buttons[i].config(command = lambda: self.tasks[i].back())
             self.end_buttons[i].config(command = lambda: self.end(i))
 
+            self.time_percents[i].config(text = f"{passed_percent}%")
+            self.task_percents[i].config(text = f"{int(((self.tasks[i].current) / len(self.tasks[i].tasks)) * 100)}%")
+
+            self.time_lefts[i].config(fg = f"#ff{hex(int(255 - math.pow(1.05, passed_percent)))[2:]}{hex(int(255 - math.pow(1.05, passed_percent)))[2:]}")
+            self.time_lefts[i].config(text = self.seconds_to_string(interval-passed) + " left")
+
+            self.tasks[i].show()
+
             if self.time_bars[i]["value"] < 100 and self.task_bars[i]["value"] < 100:
-                self.time_percents[i].config(text = f"{passed_percent}%")
-                self.task_percents[i].config(text = f"{int(((self.tasks[i].current) / len(self.tasks[i].tasks)) * 100)}%")
-
-                self.time_lefts[i].config(fg = f"#ff{hex(int(255 - math.pow(1.05, passed_percent)))[2:]}{hex(int(255 - math.pow(1.05, passed_percent)))[2:]}")
-                self.time_lefts[i].config(text = self.seconds_to_string(interval-passed) + " left")
-
-                self.tasks[i].show()
                 self.end_buttons[i].pack_forget()
 
             elif self.task_bars[i]["value"] == 100:
@@ -242,7 +242,7 @@ class HomeworkManager:
             lines = f.readlines()
             f.seek(0)
             for i in range(len(lines)):
-                if self.assignments[index].id != i // 2:
+                if self.assignments[index].id != i // 3:
                     f.write(lines[i])
             f.truncate()
 
@@ -264,18 +264,19 @@ class Assignment:
 
 
 class Task:
-    def __init__(self, tasks):
+    def __init__(self, tasks, current, id):
         self.tasks = tasks
-        self.current = 0
+        self.current = current
         self.hovered = False
+        self.id = id
 
     def place(self, frame):
-        self.tasklist = Frame(frame, bg = HomeworkManager.BLACK, width = 150, height = 100)
+        self.tasklist = Frame(frame, bg = HomeworkManager.BLACK, width = 300, height = 300)
         self.tasklist.pack_propagate(False)
 
-        self.completed = Label(self.tasklist, font = ("Ink Free", 10, "bold"), fg = HomeworkManager.GREEN, bg = HomeworkManager.BLACK)
-        self.inprogress = Label(self.tasklist, font = ("Ink Free", 10, "bold"), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
-        self.incompleted = Label(self.tasklist, font = ("Ink Free", 10, "bold"), fg = HomeworkManager.RED, bg = HomeworkManager.BLACK)
+        self.completed = Label(self.tasklist, font = ("Ink Free", 12, "bold"), fg = HomeworkManager.GREEN, bg = HomeworkManager.BLACK)
+        self.inprogress = Label(self.tasklist, font = ("Ink Free", 12, "bold"), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+        self.incompleted = Label(self.tasklist, font = ("Ink Free", 12, "bold"), fg = HomeworkManager.RED, bg = HomeworkManager.BLACK)
         
         self.completed.pack(side = TOP)
         self.inprogress.pack(side = TOP)
@@ -289,10 +290,23 @@ class Task:
     def complete(self):
         if self.current < len(self.tasks):
             self.current += 1
+        self.update_file()
 
     def back(self):
         if self.current > 0:
             self.current -= 1
+        self.update_file()
+
+    def update_file(self):
+        with open("assignments.txt", "r+") as f:
+            lines = f.readlines()
+            f.seek(0)
+            for i in range(len(lines)):
+                if i - 2 != self.id:
+                    f.write(lines[i])
+                else:
+                    f.write(f"{self.current}")
+            f.truncate()
     
     def show(self):
         if not self.hovered:
@@ -326,7 +340,7 @@ class UserInput():
     def __init__(self, root, name):
         self.window = Toplevel()
         self.window.title(name)
-        self.window.geometry("200x400")
+        self.window.geometry("200x450")
         self.window.config(background = HomeworkManager.BLACK)
         self.window.resizable(False, False)
 
@@ -336,22 +350,22 @@ class UserInput():
         self.entries = []
 
         for i in range(len(self.questions)):
-            self.frame = Frame(self.window, bg = HomeworkManager.BLACK, width = 200, height = 50)
+            self.frame = Frame(self.window, bg = HomeworkManager.BLACK, width = 200, height = 70)
             self.frame.pack_propagate(False)
             self.frame.pack(side = TOP)
 
-            self.label = Label(self.frame, font = ("Ink Free", 10, "bold"), text = self.questions[i], fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
-            self.label.pack(side = TOP)
+            self.label = Label(self.frame, font = ("Constantia", 10, "bold"), text = self.questions[i], fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+            self.label.pack(side = TOP, pady = 5)
 
-            self.entry = Entry(self.frame, font = ("Arial", 10), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
-            self.entry.pack(side = TOP)
+            self.entry = Entry(self.frame, font = ("Ink Free", 10), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+            self.entry.pack(side = TOP, pady = 5)
             self.entries.append(self.entry)
 
-        self.submit = Button(self.window, text = "Submit", command = lambda: self.update(root))
-        self.submit.pack(side = TOP)
+        self.submit = Button(self.window, font = ("Constantia", 10, "bold"), text = "Submit", command = lambda: self.update(root))
+        self.submit.pack(side = TOP, pady = 10)
 
-        self.reset = Button(self.window, text = "Reset", command = lambda: self.clear())
-        self.reset.pack(side = TOP)
+        self.reset = Button(self.window, font = ("Constantia", 10, "bold"), text = "Reset", command = lambda: self.clear())
+        self.reset.pack(side = TOP, pady = 10)
 
     def update(self, root):
         title, topic, start, end = self.entries[0].get().strip(), self.entries[1].get().strip(), self.entries[2].get().strip(), self.entries[3].get().strip()
@@ -378,13 +392,17 @@ class UserInput():
                     tasks[i].strip()
 
                 root.stop_updating()
-                root.assignments.append(Assignment(start, end, title, topic))
-                root.tasks.append(Task(tasks))
+                root.assignments.append(Assignment(start, end, title, topic, len(root.assignments)))
+                root.tasks.append(Task(tasks, 0, len(root.tasks)))
 
                 with open('assignments.txt', "a") as f:
                     f.write(f"{title} {topic} {start} {end}\n")
                     for i in range(len(tasks)):
-                        f.write(f"{tasks[i]} ")
+                        if i != len(tasks) - 1:
+                            f.write(f"{tasks[i]}, ")
+                        else:
+                            f.write(f"{tasks[i]}")
+                    f.write("\n0\n")
 
                 root.clear_widgets()
                 root.setup()
