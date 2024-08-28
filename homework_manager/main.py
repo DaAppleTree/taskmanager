@@ -191,7 +191,7 @@ class HomeworkManager:
 
             elif self.task_bars[i]["value"] == 100:
                 self.end_buttons[i].pack(side = LEFT, padx = 10)
-            self.root.update_idletasks()
+        self.root.update_idletasks()
     
     def reorder(self, order):
         self.stop_updating()
@@ -399,7 +399,7 @@ class UserInput():
 
                 root.stop_updating()
                 root.assignments.append(Assignment(start, end, title, topic, len(root.assignments)))
-                root.tasks.append(Task(tasks, 0, len(root.tasks)))
+                root.tasks.append(Task(tasks, 0, len(root.tasks)*3))
 
                 with open('assignments.txt', "a") as f:
                     f.write(f"{title} {topic} {start} {end}\n")
@@ -462,58 +462,69 @@ class Calendar:
         self.update(root)
 
     def update(self, root):
-        header = Frame(self.calendar, bg = HomeworkManager.BLACK)
-        header.pack(side = TOP)
-
-        back_button = Button(header, text = "<", width = 2, height = 1, command = lambda : self.prev_month(root))
-        back_button.pack(side = LEFT)
-
-        title = Label(header, text = f"{self.months[self.month-1]} 20{self.year}", font = ("Constantia", 15, "bold"), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
-        title.pack(side = LEFT, padx = 10)
-
-        next_button = Button(header, text = ">", width = 2, height = 1, command = lambda : self.next_month(root))
-        next_button.pack(side = LEFT)
-
-        cal = calendar.monthcalendar(self.year, self.month)
-
-        self.assignments = []
-        for i in range(len(root.assignments)):
-            self.assignments.append(root.assignments[i].end.strftime("%Y/%m/%d"))
-        print(self.assignments)
-        
-        columns = Frame(self.calendar, bg = HomeworkManager.BLACK)
-        columns.pack(side = TOP)
-
-        for i in range(len(self.weekdays)):
-            column = Frame(columns, bg = HomeworkManager.BLACK, width = 30, height = 200)
-            column.pack_propagate(False)
-            column.pack(side = LEFT)
-
-            header = Label(column, text = self.weekdays[i], font = ("Constantia", 10, "bold"), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK, width = 2, height = 2)
+        if not HomeworkManager.scrolling:
+            header = Frame(self.calendar, bg = HomeworkManager.BLACK)
             header.pack(side = TOP)
 
-            for week in range(len(cal)):
-                for day in range(len(cal[week])):
-                    if day == i:
-                        if cal[week][day] != 0:
-                            button = Button(column, text = str(cal[week][day]), command = lambda d = cal[week][day]: self.clicked(d), width = 2, height = 1)
-                            button.pack(side = TOP, pady = 2)
-                            if f"20{self.year}/0{self.month}/{cal[week][day]}" in self.assignments:
-                                button.config(bg = HomeworkManager.RED)
-                        else:
-                            button = Button(column, width = 2, height = 1, bg = HomeworkManager.BLACK)
-                            button.pack(side = TOP, pady = 2)
+            back_button = Button(header, text = "<", width = 2, height = 1, command = lambda : self.prev_month(root))
+            back_button.pack(side = LEFT)
 
-        self.description = Label(self.calendar, font = ("Constantia", 10, "bold"), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
-        self.description.pack(side = TOP)
+            title = Label(header, text = f"{self.months[self.month-1]} 20{self.year}", font = ("Constantia", 15, "bold"), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+            title.pack(side = LEFT, padx = 10)
 
-    def clicked(self, day):
-        string = f"You clicked {self.year}/{self.month}/{day}"
+            next_button = Button(header, text = ">", width = 2, height = 1, command = lambda : self.next_month(root))
+            next_button.pack(side = LEFT)
+
+            cal = calendar.monthcalendar(self.year, self.month)
+
+            self.assignments = []
+            self.ids = []
+            for i in range(len(root.assignments)):
+                self.assignments.append(root.assignments[i].end.strftime("%Y/%m/%d"))
+                self.ids.append(root.assignments[i].id)
+            
+            columns = Frame(self.calendar, bg = HomeworkManager.BLACK)
+            columns.pack(side = TOP)
+
+            for i in range(len(self.weekdays)):
+                column = Frame(columns, bg = HomeworkManager.BLACK, width = 30, height = 250)
+                column.pack_propagate(False)
+                column.pack(side = LEFT)
+
+                header = Label(column, text = self.weekdays[i], font = ("Constantia", 10, "bold"), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK, width = 2, height = 2)
+                header.pack(side = TOP)
+
+                for week in range(len(cal)):
+                    for day in range(len(cal[week])):
+                        if day == i:
+                            if cal[week][day] != 0:
+                                button = Button(column, text = str(cal[week][day]), command = lambda d = cal[week][day]: self.clicked(root, d), width = 2, height = 1)
+                                button.pack(side = TOP, pady = 2)
+
+                                m = f"0{self.month}" if self.month < 10 else f"{self.month}"
+                                d = f"0{cal[week][day]}" if cal[week][day] < 10 else f"{cal[week][day]}"
+                                self.date = f"20{self.year}/{m}/{d}"
+
+                                if self.date in self.assignments:
+                                    button.config(bg = HomeworkManager.RED)
+                            else:
+                                button = Button(column, width = 2, height = 1, bg = HomeworkManager.BLACK)
+                                button.pack(side = TOP, pady = 2)
+
+            self.description = Label(self.calendar, font = ("Constantia", 10, "bold"), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
+            self.description.pack(side = TOP)
+
+    def clicked(self, root, day):
+        m = f"0{self.month}" if self.month < 10 else f"{self.month}"
+        d = f"0{day}" if day < 10 else f"{day}"
+        string = f"20{self.year}/{m}/{d}"
+
         for i in range(len(self.assignments)):
-            if self.assignments[i] == f"20{self.year}/0{self.month}/{day}":
-                string += "\nAssignment Due"
+            if self.assignments[i] == f"20{self.year}/{m}/{d}":
+                for j in range(len(root.assignments)):
+                    if root.assignments[j].id == self.ids[i]:
+                        string += f"\n{root.assignments[j].end.strftime('%H:%M:%S')} - {root.assignments[j].title}"
         self.description.config(text = string)
-
     
     def prev_month(self, root):
         if self.month > 1:
