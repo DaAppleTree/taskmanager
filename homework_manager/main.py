@@ -47,8 +47,8 @@ class HomeworkManager:
 
         for i in range(0, len(lines), 3):
             line = lines[i].split()
-            self.assignments.append(Assignment(f"{line[2]} {line[3]}", f"{line[4]} {line[5]}", line[0], line[1], i))
-            self.tasks.append(Task(lines[i+1].split(","), int(lines[i+2]), i))
+            self.assignments.append(Assignment(f"{line[2]} {line[3]}", f"{line[4]} {line[5]}", line[0], line[1], i//3))
+            self.tasks.append(Task(lines[i+1].split(","), int(lines[i+2]), i//3))
 
         self.setup()
     
@@ -191,6 +191,7 @@ class HomeworkManager:
 
             elif self.task_bars[i]["value"] == 100:
                 self.end_buttons[i].pack(side = LEFT, padx = 10)
+
         self.root.update_idletasks()
     
     def reorder(self, order):
@@ -207,6 +208,20 @@ class HomeworkManager:
             sorted_data = sorted(zip(self.assignments, self.tasks), key = lambda a : (a[0].topic))
         
         self.assignments, self.tasks = map(list, zip(*sorted_data))
+        for i in range(len(self.assignments)):
+            self.assignments[i].id = i
+            self.tasks[i].id = i
+        
+        with open('assignments.txt', "w") as f:
+            f.seek(0)
+            for i in range(len(self.assignments)):
+                f.write(f"{self.assignments[i].title.strip()} {self.assignments[i].topic.strip()} {self.assignments[i].start_string().strip()} {self.assignments[i].end_string().strip()}\n")
+                for j in range(len(self.tasks[i].tasks)):
+                    if j != len(self.tasks[i].tasks) - 1:
+                        f.write(f"{self.tasks[i].tasks[j].strip()}, ")
+                    else:
+                        f.write(f"{self.tasks[i].tasks[j].strip()}")
+                f.write(f"\n{self.tasks[i].current}\n")
 
         self.clear_widgets()
         self.setup()
@@ -248,7 +263,7 @@ class HomeworkManager:
             lines = f.readlines()
             f.seek(0)
             for i in range(len(lines)):
-                if self.assignments[index].id != i // 3:
+                if self.assignments[index].id * 3 != i // 3:
                     f.write(lines[i])
             f.truncate()
 
@@ -267,6 +282,18 @@ class Assignment:
         self.title = title
         self.topic = topic
         self.id = id
+    
+    def start_string(self):
+        return self.start.strftime("%Y/%m/%d %H:%M:%S")
+    
+    def end_string(self):
+        return self.end.strftime("%Y/%m/%d %H:%M:%S")
+    
+    def end_date(self):
+        return self.end.strftime("%Y/%m/%d")
+    
+    def end_time(self):
+        return self.end.strftime("%H:%M:%S")
 
 
 class Task:
@@ -308,7 +335,7 @@ class Task:
             lines = f.readlines()
             f.seek(0)
             for i in range(len(lines)):
-                if i - 2 != self.id:
+                if i - 2 != self.id * 3:
                     f.write(lines[i])
                 else:
                     f.write(f"{self.current}\n")
@@ -351,7 +378,6 @@ class UserInput():
         self.window.resizable(False, False)
 
         self.questions = ["Title", "Topic", "Start Time", "End Time", "Tasks"]
-        # 2024-08-20 19:19:19
 
         self.entries = []
 
@@ -398,7 +424,7 @@ class UserInput():
                     tasks[i].strip()
 
                 root.stop_updating()
-                root.assignments.append(Assignment(start, end, title, topic, len(root.assignments)))
+                root.assignments.append(Assignment(start, end, title, topic, len(root.assignments)*3))
                 root.tasks.append(Task(tasks, 0, len(root.tasks)*3))
 
                 with open('assignments.txt', "a") as f:
@@ -480,7 +506,7 @@ class Calendar:
             self.assignments = []
             self.ids = []
             for i in range(len(root.assignments)):
-                self.assignments.append(root.assignments[i].end.strftime("%Y/%m/%d"))
+                self.assignments.append(root.assignments[i].end_date())
                 self.ids.append(root.assignments[i].id)
             
             columns = Frame(self.calendar, bg = HomeworkManager.BLACK)
@@ -523,7 +549,7 @@ class Calendar:
             if self.assignments[i] == f"20{self.year}/{m}/{d}":
                 for j in range(len(root.assignments)):
                     if root.assignments[j].id == self.ids[i]:
-                        string += f"\n{root.assignments[j].end.strftime('%H:%M:%S')} - {root.assignments[j].title}"
+                        string += f"\n{root.assignments[j].end_time()} - {root.assignments[j].title}"
         self.description.config(text = string)
     
     def prev_month(self, root):
