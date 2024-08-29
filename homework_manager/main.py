@@ -1,30 +1,42 @@
+"""
+homeworkmanager.py - a homework managing application with real time progress
+"""
+
+# import all necessary modules
 from tkinter import *
 from tkinter import ttk, messagebox
 from tkinter.ttk import Progressbar
 import datetime, math, os, calendar
 
+# main class for the main window
 class HomeworkManager: 
-    
+
+    # constants
     MARGIN = 120
     GREEN = "#008000"
     RED = "#ff0000"
     WHITE = "#ffffff"
     BLACK = "#000000"
+    SECTION = 3
 
     scrolling = False
     updating = False
 
     def __init__(self, root):
+
+        # window setup
         self.root = root
         self.root.title("Homework Manager")
         self.root.geometry("1000x600")
         self.root.config(background = "#000000")
         self.root.resizable(False, False)
-
+        
+        # mainframe setup
         self.mainframe = Frame(self.root, width = 800, height = 500)
         self.mainframe.pack_propagate(False)
         self.mainframe.pack(fill = BOTH, expand = 1)
 
+        # progressbar styles declaration
         self.green_style = ttk.Style()
         self.green_style.theme_use("clam")
         self.green_style.configure("green.Horizontal.TProgressbar", foreground = HomeworkManager.GREEN, background = HomeworkManager.GREEN)
@@ -33,45 +45,57 @@ class HomeworkManager:
         self.red_style.theme_use("clam")
         self.red_style.configure("red.Horizontal.TProgressbar", foreground = HomeworkManager.RED, background = HomeworkManager.RED)
 
+        # scroller setup
         self.scroller = Scroller(self.mainframe)
 
+        # widget list declaration
         self.assignments, self.tasks = [], []
         self.time_bars, self.task_bars, self.time_percents, self.task_percents, self.time_lefts = [], [], [], [], []
         self.next_buttons, self.back_buttons, self.end_buttons = [], [], []
 
-        # line of code taken from https://stackoverflow.com/questions/509742/change-directory-to-the-directory-of-a-python-script
-        os.chdir(os.path.dirname(os.path.realpath(__file__)))
+        # opens file to read assignments and tasks
+        os.chdir(os.path.dirname(os.path.realpath(__file__))) # line of code taken from https://stackoverflow.com/questions/509742/change-directory-to-the-directory-of-a-python-script
 
         with open("assignments.txt", "r") as f:
             lines = f.readlines()
+            if len(lines) > HomeworkManager.SECTION - 1:
+                for i in range(0, len(lines), HomeworkManager.SECTION):
+                    line = lines[i].split()
+                    self.assignments.append(Assignment(f"{line[2]} {line[3]}", f"{line[4]} {line[5]}", line[0], line[1], i//HomeworkManager.SECTION))
+                    self.tasks.append(Task(lines[i+1].split(","), int(lines[i+2]), i//HomeworkManager.SECTION))
 
-        for i in range(0, len(lines), 3):
-            line = lines[i].split()
-            self.assignments.append(Assignment(f"{line[2]} {line[3]}", f"{line[4]} {line[5]}", line[0], line[1], i//3))
-            self.tasks.append(Task(lines[i+1].split(","), int(lines[i+2]), i//3))
-
+        # set up all widgets
         self.setup()
     
     def setup(self):
+
+        # set up title label
         label = Label(self.scroller.frame, text = "Homework Manager", font=("Constantia", 30, "bold"), fg = "#5c9bb7", bg = "#000000")
         label.pack(side = TOP)
 
-        bars = Frame(self.scroller.frame, bg = HomeworkManager.BLACK)
-        bars.pack(side = LEFT)
+        # set up frame for all progress bars
+        units = Frame(self.scroller.frame, bg = HomeworkManager.BLACK)
+        units.pack(side = LEFT)
 
+        # create units for all assignments
         for i in range(len(self.assignments)):
-            unit = Frame(bars, bg = HomeworkManager.BLACK, bd = 5, relief = RAISED, width = 600, height = 300)
+
+            # set up frame for one progress bar
+            unit = Frame(units, bg = HomeworkManager.BLACK, bd = 5, relief = RAISED, width = 600, height = 300)
             unit.pack_propagate(False)
             unit.pack(side = TOP, pady = 10, padx = 15)
 
+            # set up frame for header
             header = Frame(unit, bg = HomeworkManager.BLACK)
             header.pack(side = TOP)
 
+            # set up labels for topic and title
             topic = Label(header, font = ("Constantia", 20, "bold"), text = self.assignments[i].topic, fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
             topic.pack(side = TOP)
             title = Label(header, font = ("Constantia", 15), text = self.assignments[i].title, fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
             title.pack(side = TOP)
 
+            # set up frames, labels, and progressbars
             info = Frame(unit, bg = HomeworkManager.BLACK)
             info.pack(side = LEFT)
 
@@ -93,9 +117,11 @@ class HomeworkManager:
             task_bar = Progressbar(task_info, orient = HORIZONTAL, length = 300, style = "green.Horizontal.TProgressbar")
             task_bar.pack(side = LEFT)
 
+            # set up time left label
             time_left = Label(info, font = ("Constantia", 15), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
             time_left.pack(side = TOP, pady = 10)
 
+            # set up frames and buttons
             button_info = Frame(info, bg = HomeworkManager.BLACK, width = 300, height = 50)
             button_info.pack_propagate(False)
             button_info.pack(side = TOP, pady = 10)
@@ -109,8 +135,10 @@ class HomeworkManager:
             end_button = Button(button_info, font = ("Constantia", 10, "bold"), text = "end")
             end_button.pack(side = LEFT, padx = 10)
 
+            # set up widgets for the tasklist
             self.tasks[i].place(unit)
-
+            
+            # add widgets to lists
             self.time_bars.append(time_bar)
             self.task_bars.append(task_bar)
             self.time_percents.append(time_percent)
@@ -120,12 +148,14 @@ class HomeworkManager:
             self.back_buttons.append(back_button)
             self.end_buttons.append(end_button)
 
-        settings = Frame(self.scroller.frame, bg = HomeworkManager.BLACK, bd = 5, relief = RAISED, width = 200, height = 400)
+        # set up settings frame and add settings button
+        settings = Frame(self.scroller.frame, bg = HomeworkManager.BLACK, bd = 5, relief = RAISED, width = 300, height = 400)
         settings.pack_propagate(False)
         settings.pack(side = TOP, padx = 15)
 
         add_label = Label(settings, font = ("Constantia", 15, "bold"), text = "Add", fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
         add_label.pack(side = TOP, pady = 10)
+
         add = Button(settings, font = ("Constantia", 10, "bold"), text = "Add assignment", command = lambda: self.create_window())
         add.pack(side = TOP, pady = 10)
 
@@ -144,12 +174,15 @@ class HomeworkManager:
         sort_topic = Button(settings, font = ("Constantia", 10, "bold"), text = "Topic", command = lambda: self.reorder("topic"))
         sort_topic.pack(side = TOP, pady = 10)
 
+        # set up calendar frame and add calendar widget
         calendar_frame = Frame(self.scroller.frame, bg = HomeworkManager.BLACK, bd = 5, relief = RAISED, width = 300, height = 400)
         calendar_frame.pack_propagate(False)
         calendar_frame.pack(side = TOP, padx = 15)
+
         self.calendar = Calendar(calendar_frame, "24", "08", self)
         calendar_frame.pack()
 
+        # start updating widgets
         self.start_updating()
 
     def start_updating(self):
@@ -167,35 +200,42 @@ class HomeworkManager:
 
     def update(self, i):
         if not HomeworkManager.scrolling:
+            # update passed and interval
             passed = int((datetime.datetime.now()-self.assignments[i].start).total_seconds())
             interval = (self.assignments[i].end - self.assignments[i].start).total_seconds()
             passed_percent = int((passed / interval) * 100)
 
+            # update progressbars
             self.time_bars[i]["value"] = passed_percent
             self.task_bars[i]["value"] = ((self.tasks[i].current) / len(self.tasks[i].tasks)) * 100
 
+            # update button commands
             self.next_buttons[i].config(command = lambda: self.tasks[i].complete())
             self.back_buttons[i].config(command = lambda: self.tasks[i].back())
             self.end_buttons[i].config(command = lambda: self.end(i))
 
+            # update labels
             self.time_percents[i].config(text = f"{passed_percent}%")
             self.task_percents[i].config(text = f"{int(((self.tasks[i].current) / len(self.tasks[i].tasks)) * 100)}%")
-
             self.time_lefts[i].config(fg = f"#ff{hex(int(255 - math.pow(1.05, passed_percent)))[2:]}{hex(int(255 - math.pow(1.05, passed_percent)))[2:]}")
             self.time_lefts[i].config(text = self.seconds_to_string(interval-passed) + " left")
 
+            # update tasklists
             self.tasks[i].show()
 
+            # show or hide end buttons accordingly
             if self.time_bars[i]["value"] < 100 and self.task_bars[i]["value"] < 100:
                 self.end_buttons[i].pack_forget()
-
             elif self.task_bars[i]["value"] == 100:
                 self.end_buttons[i].pack(side = LEFT, padx = 10)
 
+        # update window
         self.root.update_idletasks()
     
     def reorder(self, order):
         self.stop_updating()
+
+        # reorder assignments and tasks accordingly
         if order == "time":
             now = datetime.datetime.now()
             sorted_data = sorted(zip(self.assignments, self.tasks), key = lambda a : (a[0].end - now).total_seconds())
@@ -207,6 +247,7 @@ class HomeworkManager:
         elif order == "topic":
             sorted_data = sorted(zip(self.assignments, self.tasks), key = lambda a : (a[0].topic))
         
+        # create new IDs and update text file
         self.assignments, self.tasks = map(list, zip(*sorted_data))
         for i in range(len(self.assignments)):
             self.assignments[i].id = i
@@ -223,10 +264,12 @@ class HomeworkManager:
                         f.write(f"{self.tasks[i].tasks[j].strip()}")
                 f.write(f"\n{self.tasks[i].current}\n")
 
+        # reset frames
         self.clear_widgets()
         self.setup()
 
     def clear_widgets(self):
+        # destory all widgets and clear all lists
         for widget in self.scroller.frame.winfo_children():
             widget.destroy()
         self.time_bars.clear()
@@ -242,6 +285,7 @@ class HomeworkManager:
         self.new_window = UserInput(self, "Create an Assignment")
 
     def seconds_to_string(self, seconds):
+        # converts seconds into proper time notation
         days = int(seconds//(60*60*24))
         days = str(days) if abs(days) >= 10 else "0" + str(days)
 
@@ -257,13 +301,14 @@ class HomeworkManager:
         return f"{days}:{hours}:{minutes}:{seconds}"
     
     def end(self, index):
+        # removes assignments and tasks from lists and text file
         self.stop_updating()
 
         with open("assignments.txt", "r+") as f:
             lines = f.readlines()
             f.seek(0)
             for i in range(len(lines)):
-                if self.assignments[index].id * 3 != i // 3:
+                if self.assignments[index].id * HomeworkManager.SECTION != i // HomeworkManager.SECTION:
                     f.write(lines[i])
             f.truncate()
 
@@ -283,6 +328,7 @@ class Assignment:
         self.topic = topic
         self.id = id
     
+    # returns datetime information in string format
     def start_string(self):
         return self.start.strftime("%Y/%m/%d %H:%M:%S")
     
@@ -304,6 +350,7 @@ class Task:
         self.id = id
 
     def place(self, frame):
+        # set up frame for tasks and labels
         self.tasklist = Frame(frame, bg = HomeworkManager.BLACK, width = 300, height = 300)
         self.tasklist.pack_propagate(False)
 
@@ -320,6 +367,7 @@ class Task:
 
         self.tasklist.pack(side = RIGHT)
     
+    # increase and decrease current task
     def complete(self):
         if self.current < len(self.tasks):
             self.current += 1
@@ -330,17 +378,19 @@ class Task:
             self.current -= 1
         self.update_file()
 
+    # updates text file every time current task changes
     def update_file(self):
         with open("assignments.txt", "r+") as f:
             lines = f.readlines()
             f.seek(0)
             for i in range(len(lines)):
-                if i - 2 != self.id * 3:
+                if i - (HomeworkManager.SECTION - 1) != self.id * HomeworkManager.SECTION:
                     f.write(lines[i])
                 else:
                     f.write(f"{self.current}\n")
             f.truncate()
     
+    # fromats the text on the tasklist
     def show(self):
         if not self.hovered:
             self.completed.config(text = "")
@@ -366,11 +416,14 @@ class Task:
             self.incompleted.config(text = incomplete_tasklist.strip())
             self.inprogress.config(text = inprogress_tasklist.strip())
     
+    # detects if mouse is hovering
     def is_on_mouse(self, event, state):
         self.hovered = state
 
 class UserInput():
     def __init__(self, root, name):
+
+        # new window for user input
         self.window = Toplevel()
         self.window.title(name)
         self.window.geometry("200x450")
@@ -381,6 +434,7 @@ class UserInput():
 
         self.entries = []
 
+        # set up labels and entries for all questions
         for i in range(len(self.questions)):
             self.frame = Frame(self.window, bg = HomeworkManager.BLACK, width = 200, height = 70)
             self.frame.pack_propagate(False)
@@ -392,7 +446,8 @@ class UserInput():
             self.entry = Entry(self.frame, font = ("Ink Free", 10), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
             self.entry.pack(side = TOP, pady = 5)
             self.entries.append(self.entry)
-
+            
+        # set up two buttons for submitting and resetting
         self.submit = Button(self.window, font = ("Constantia", 10, "bold"), text = "Submit", command = lambda: self.update(root))
         self.submit.pack(side = TOP, pady = 10)
 
@@ -400,8 +455,9 @@ class UserInput():
         self.reset.pack(side = TOP, pady = 10)
 
     def update(self, root):
+
+        # analyze conditions where user input is invalid
         title, topic, start, end = self.entries[0].get().strip(), self.entries[1].get().strip(), self.entries[2].get().strip(), self.entries[3].get().strip()
-        
         if len(start) == 10:
             start += " 23:59:59"
         if len(end) == 10:
@@ -419,13 +475,14 @@ class UserInput():
             elif (endtime - now).total_seconds() < 0:
                 messagebox.showwarning(title = "Time Error", message = "Please ensure end time is after current time")
             else:
+                # add assignments and tasks to lists and text file if user input is valid
                 tasks = self.entries[4].get().split(",")
                 for i in range(len(tasks)):
                     tasks[i].strip()
 
                 root.stop_updating()
-                root.assignments.append(Assignment(start, end, title, topic, len(root.assignments)*3))
-                root.tasks.append(Task(tasks, 0, len(root.tasks)*3))
+                root.assignments.append(Assignment(start, end, title, topic, len(root.assignments)))
+                root.tasks.append(Task(tasks, 0, len(root.tasks)))
 
                 with open('assignments.txt', "a") as f:
                     f.write(f"{title} {topic} {start} {end}\n")
@@ -436,11 +493,13 @@ class UserInput():
                             f.write(f"{tasks[i]}")
                     f.write("\n0\n")
 
+                # clears all widgets and resets frames
                 root.clear_widgets()
                 root.setup()
                 root.scroller.canvas.configure(scrollregion=root.scroller.canvas.bbox("all"))
                 self.window.destroy()
-        
+    
+    # clears all user input
     def clear(self):
         for i in range(len(self.entries)):
             self.entries[i].delete(0, END)
@@ -449,6 +508,7 @@ class UserInput():
 # some code taken from https://www.youtube.com/watch?v=0WafQCaok6g
 class Scroller:
     def __init__(self, mainframe):
+        # set up scroller
         self.canvas = Canvas(mainframe, bg = HomeworkManager.BLACK)
         self.canvas.pack(side = LEFT, fill = BOTH, expand = TRUE)
 
@@ -465,6 +525,7 @@ class Scroller:
 
         self.is_scrolling = False
 
+    # detects whether scrollbar is being used
     def scrolling(self, event):
         if not self.is_scrolling:
             HomeworkManager.scrolling = True
@@ -477,6 +538,7 @@ class Scroller:
 
 class Calendar:
     def __init__(self, frame, year, month, root):
+        # set up calendar frame
         self.year = int(year)
         self.month = int(month)
 
@@ -489,6 +551,7 @@ class Calendar:
 
     def update(self, root):
         if not HomeworkManager.scrolling:
+            # set up the header for the calendar
             header = Frame(self.calendar, bg = HomeworkManager.BLACK)
             header.pack(side = TOP)
 
@@ -503,12 +566,14 @@ class Calendar:
 
             cal = calendar.monthcalendar(self.year, self.month)
 
+            # check due dates for all assignments
             self.assignments = []
             self.ids = []
             for i in range(len(root.assignments)):
                 self.assignments.append(root.assignments[i].end_date())
                 self.ids.append(root.assignments[i].id)
             
+            # set up the columns with buttons in the calendar
             columns = Frame(self.calendar, bg = HomeworkManager.BLACK)
             columns.pack(side = TOP)
 
@@ -537,10 +602,13 @@ class Calendar:
                                 button = Button(column, width = 2, height = 1, bg = HomeworkManager.BLACK)
                                 button.pack(side = TOP, pady = 2)
 
+            # set up the description
             self.description = Label(self.calendar, font = ("Constantia", 10, "bold"), fg = HomeworkManager.WHITE, bg = HomeworkManager.BLACK)
             self.description.pack(side = TOP)
 
     def clicked(self, root, day):
+
+        # clicking a date on the calendar will show its date and all due assignments
         m = f"0{self.month}" if self.month < 10 else f"{self.month}"
         d = f"0{day}" if day < 10 else f"{day}"
         string = f"20{self.year}/{m}/{d}"
@@ -552,6 +620,7 @@ class Calendar:
                         string += f"\n{root.assignments[j].end_time()} - {root.assignments[j].title}"
         self.description.config(text = string)
     
+    # go back and forward a month on the calendar (only from 2000 to 2099)
     def prev_month(self, root):
         if self.month > 1:
             self.month -= 1
@@ -574,8 +643,7 @@ class Calendar:
             widget.destroy()
         self.update(root)
             
-
-
+# main program
 root = Tk()
 app = HomeworkManager(root)
 root.mainloop()

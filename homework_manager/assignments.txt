@@ -1,18 +1,3 @@
-english english 2024/06/30 23:59:59 2024/08/30 23:59:59
-cry, cry again
-1
-science science 2024/07/04 23:59:59 2024/08/30 23:59:59
-study, study, study some more
-1
-history history 2024/05/06 23:59:59 2024/08/31 23:59:59
-read, listen, present
+math math 2024/05/06 23:59:59 2024/12/30 23:59:59
+cry,  cry again,  cry
 0
-math math 2024/05/30 23:59:59 2024/09/03 23:59:59
-cry, cry some more, cry even more
-1
-french francais 2024/06/06 23:59:59 2024/10/10 23:59:59
-nothing
-0
-economics economics 2023/01/01 23:59:59 2025/01/01 23:59:59
-read, write, run
-3
